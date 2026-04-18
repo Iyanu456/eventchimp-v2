@@ -1,0 +1,18 @@
+{
+  "name": "eventchimp-v2",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c blue,green \"pnpm --filter eventchimp-frontend dev\" \"pnpm --filter eventchimp-backend dev\"",
+    "build": "pnpm --filter eventchimp-frontend build && pnpm --filter eventchimp-backend build",
+    "typecheck": "pnpm --filter eventchimp-frontend typecheck && pnpm --filter eventchimp-backend typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+}

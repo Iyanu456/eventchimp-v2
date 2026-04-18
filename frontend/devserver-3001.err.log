@@ -1,0 +1,213 @@
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, stat 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\cache\webpack\client-development\2.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, stat 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\cache\webpack\client-development\0.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/action-async-storage.external' in C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app for build dependencies doesn't lead to expected result 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\client\components\action-async-storage.external.js', but to 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\client\components\action-async-storage.external.js' instead. Resolving dependencies are ignored for this path.
+<w>  at unknown 4 .pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/action-async-storage.external
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/request-async-storage.external' in C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app for build dependencies doesn't lead to expected result 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\client\components\request-async-storage.external.js', but to 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\client\components\request-async-storage.external.js' instead. Resolving dependencies are ignored for this path.
+<w>  at unknown 4 .pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/request-async-storage.external
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/static-generation-async-storage.external' in C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app for build dependencies doesn't lead to expected result 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\client\components\static-generation-async-storage.external.js', but to 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\client\components\static-generation-async-storage.external.js' instead. Resolving dependencies are ignored for this path.
+<w>  at unknown 4 .pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/client/components/static-generation-async-storage.external
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev' in C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app for build dependencies doesn't lead to expected result 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js', but to 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js' instead. Resolving dependencies are ignored for this path.
+<w>  at unknown 4 .pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/next/dist/compiled/next-server/app-page.runtime.dev
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\server\app\page.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\handle-externals.js
+<w>  at file dependencies C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\node_modules\.pnpm\next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, stat 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\cache\webpack\client-development\2.pack.gz'
+ ⨯ ./src/components/ui/loading-card.tsx
+Error: 
+  [31mx[0m the name `cn` is defined multiple times
+    ,-[[36;1;4mC:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\src\components\ui\loading-card.tsx[0m:1:1]
+ [2m 1[0m | import { cn } from "@/lib/utils";
+    : [31;1m         ^|[0m
+    :           [31;1m`-- [31;1mprevious definition of `cn` here[0m[0m
+ [2m 2[0m | 
+ [2m 3[0m | export function LoadingCard({ className = "h-56" }: { className?: string }) {
+ [2m 4[0m |   return (
+ [2m 5[0m |     <div className={cn("surface-panel animate-pulse overflow-hidden p-5", className)}>
+ [2m 6[0m |       <div className="h-full w-full rounded-[6px] bg-surface" />
+ [2m 7[0m |     </div>
+ [2m 8[0m |   );
+ [2m 9[0m | }
+ [2m10[0m | import { cn } from "@/lib/utils";
+    : [33;1m         ^|[0m
+    :           [33;1m`-- [33;1m`cn` redefined here[0m[0m
+ [2m11[0m | 
+ [2m12[0m | export function LoadingCard({ className }: { className?: string }) {
+ [2m13[0m |   return (
+    `----
+
+  [31mx[0m the name `LoadingCard` is defined multiple times
+    ,-[[36;1;4mC:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\src\components\ui\loading-card.tsx[0m:1:1]
+ [2m 1[0m | import { cn } from "@/lib/utils";
+ [2m 2[0m | 
+ [2m 3[0m | export function LoadingCard({ className = "h-56" }: { className?: string }) {
+    : [31;1m                ^^^^^|^^^^^[0m
+    :                      [31;1m`-- [31;1mprevious definition of `LoadingCard` here[0m[0m
+ [2m 4[0m |   return (
+ [2m 5[0m |     <div className={cn("surface-panel animate-pulse overflow-hidden p-5", className)}>
+ [2m 6[0m |       <div className="h-full w-full rounded-[6px] bg-surface" />
+ [2m 7[0m |     </div>
+ [2m 8[0m |   );
+ [2m 9[0m | }
+ [2m10[0m | import { cn } from "@/lib/utils";
+ [2m11[0m | 
+ [2m12[0m | export function LoadingCard({ className }: { className?: string }) {
+    : [33;1m                ^^^^^|^^^^^[0m
+    :                      [33;1m`-- [33;1m`LoadingCard` redefined here[0m[0m
+ [2m13[0m |   return (
+ [2m14[0m |     <div
+ [2m15[0m |       className={cn(
+    `----
+
+Import trace for requested module:
+./src/components/ui/loading-card.tsx
+./src/components/marketing/home-sections.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, stat 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ ./src/components/ui/loading-card.tsx
+Error: 
+  [31mx[0m the name `cn` is defined multiple times
+    ,-[[36;1;4mC:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\src\components\ui\loading-card.tsx[0m:1:1]
+ [2m 1[0m | import { cn } from "@/lib/utils";
+    : [31;1m         ^|[0m
+    :           [31;1m`-- [31;1mprevious definition of `cn` here[0m[0m
+ [2m 2[0m | 
+ [2m 3[0m | export function LoadingCard({ className = "h-56" }: { className?: string }) {
+ [2m 4[0m |   return (
+ [2m 5[0m |     <div className={cn("surface-panel animate-pulse overflow-hidden p-5", className)}>
+ [2m 6[0m |       <div className="h-full w-full rounded-[6px] bg-surface" />
+ [2m 7[0m |     </div>
+ [2m 8[0m |   );
+ [2m 9[0m | }
+ [2m10[0m | import { cn } from "@/lib/utils";
+    : [33;1m         ^|[0m
+    :           [33;1m`-- [33;1m`cn` redefined here[0m[0m
+ [2m11[0m | 
+ [2m12[0m | export function LoadingCard({ className }: { className?: string }) {
+ [2m13[0m |   return (
+    `----
+
+  [31mx[0m the name `LoadingCard` is defined multiple times
+    ,-[[36;1;4mC:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\src\components\ui\loading-card.tsx[0m:1:1]
+ [2m 1[0m | import { cn } from "@/lib/utils";
+ [2m 2[0m | 
+ [2m 3[0m | export function LoadingCard({ className = "h-56" }: { className?: string }) {
+    : [31;1m                ^^^^^|^^^^^[0m
+    :                      [31;1m`-- [31;1mprevious definition of `LoadingCard` here[0m[0m
+ [2m 4[0m |   return (
+ [2m 5[0m |     <div className={cn("surface-panel animate-pulse overflow-hidden p-5", className)}>
+ [2m 6[0m |       <div className="h-full w-full rounded-[6px] bg-surface" />
+ [2m 7[0m |     </div>
+ [2m 8[0m |   );
+ [2m 9[0m | }
+ [2m10[0m | import { cn } from "@/lib/utils";
+ [2m11[0m | 
+ [2m12[0m | export function LoadingCard({ className }: { className?: string }) {
+    : [33;1m                ^^^^^|^^^^^[0m
+    :                      [33;1m`-- [33;1m`LoadingCard` redefined here[0m[0m
+ [2m13[0m |   return (
+ [2m14[0m |     <div
+ [2m15[0m |       className={cn(
+    `----
+
+Import trace for requested module:
+./src/components/ui/loading-card.tsx
+./src/components/marketing/home-sections.tsx
+ ⨯ ./src/components/ui/loading-card.tsx
+Error: 
+  [31mx[0m the name `cn` is defined multiple times
+    ,-[[36;1;4mC:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\src\components\ui\loading-card.tsx[0m:1:1]
+ [2m 1[0m | import { cn } from "@/lib/utils";
+    : [31;1m         ^|[0m
+    :           [31;1m`-- [31;1mprevious definition of `cn` here[0m[0m
+ [2m 2[0m | 
+ [2m 3[0m | export function LoadingCard({ className = "h-56" }: { className?: string }) {
+ [2m 4[0m |   return (
+ [2m 5[0m |     <div className={cn("surface-panel animate-pulse overflow-hidden p-5", className)}>
+ [2m 6[0m |       <div className="h-full w-full rounded-[6px] bg-surface" />
+ [2m 7[0m |     </div>
+ [2m 8[0m |   );
+ [2m 9[0m | }
+ [2m10[0m | import { cn } from "@/lib/utils";
+    : [33;1m         ^|[0m
+    :           [33;1m`-- [33;1m`cn` redefined here[0m[0m
+ [2m11[0m | 
+ [2m12[0m | export function LoadingCard({ className }: { className?: string }) {
+ [2m13[0m |   return (
+    `----
+
+  [31mx[0m the name `LoadingCard` is defined multiple times
+    ,-[[36;1;4mC:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\src\components\ui\loading-card.tsx[0m:1:1]
+ [2m 1[0m | import { cn } from "@/lib/utils";
+ [2m 2[0m | 
+ [2m 3[0m | export function LoadingCard({ className = "h-56" }: { className?: string }) {
+    : [31;1m                ^^^^^|^^^^^[0m
+    :                      [31;1m`-- [31;1mprevious definition of `LoadingCard` here[0m[0m
+ [2m 4[0m |   return (
+ [2m 5[0m |     <div className={cn("surface-panel animate-pulse overflow-hidden p-5", className)}>
+ [2m 6[0m |       <div className="h-full w-full rounded-[6px] bg-surface" />
+ [2m 7[0m |     </div>
+ [2m 8[0m |   );
+ [2m 9[0m | }
+ [2m10[0m | import { cn } from "@/lib/utils";
+ [2m11[0m | 
+ [2m12[0m | export function LoadingCard({ className }: { className?: string }) {
+    : [33;1m                ^^^^^|^^^^^[0m
+    :                      [33;1m`-- [33;1m`LoadingCard` redefined here[0m[0m
+ [2m13[0m |   return (
+ [2m14[0m |     <div
+ [2m15[0m |       className={cn(
+    `----
+
+Import trace for requested module:
+./src/components/ui/loading-card.tsx
+./src/components/marketing/home-sections.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, stat 'C:\Users\IYANUOLUWA\Documents\React\eventchimp-v2\frontend\.next\cache\webpack\client-development\0.pack.gz'
+^C^C^C

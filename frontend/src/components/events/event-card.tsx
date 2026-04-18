@@ -40,13 +40,13 @@ export function EventCard({
     return (
       <Link
         href={`/events/${event.slug}`}
-        className="grid gap-4 rounded-[16px] border border-line bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift sm:grid-cols-[110px_minmax(0,1fr)]"
+        className="grid gap-4 rounded-[16px] border border-line bg-white p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift grid-cols-[90px_minmax(0,1fr)] md:grid-cols-[110px_minmax(0,1fr)]"
       >
         <div
-          className="min-h-[112px] rounded-[12px] bg-cover bg-center"
+          className="max-md:max-h-[120px]  min-h-[10px] md:min-h-[180px] aspect-[0.8] rounded-[12px] bg-cover bg-center"
           style={coverImageStyle(event.coverImage)}
         />
-        <div className="min-w-0">
+        <div className="min-w-0 ml-0 md:ml-[2em]">
           <h3 className="line-clamp-2 text-[15px] font-semibold uppercase tracking-[-0.02em] text-ink">
             {event.title}
           </h3>

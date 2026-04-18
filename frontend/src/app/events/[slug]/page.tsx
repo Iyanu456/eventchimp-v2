@@ -42,7 +42,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
             <h1 className="font-display text-[2.1rem] font-semibold uppercase tracking-[-0.04em] leading-[1.3em] md:leading-[1.2em] sm:text-[2.55rem] md:max-w-[70%]">
               {event.title}
             </h1>
-            <div className="flex gap-3 max-md:mt-3.5 mt-2.5">
+            <div className="flex max-md:flex-col gap-3 max-md:mt-3.5 mt-2.5">
                <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span>{formatEventDate(event.startDate)}</span>
@@ -88,7 +88,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
           {Array.from({ length: 3 }).map((_, index) => (
             <div
               key={index}
-              className="aspect-[1.15] rounded-[14px] border border-line bg-cover bg-center shadow-soft"
+              className="aspect-[1.6] rounded-[14px] border border-line bg-cover bg-center shadow-soft"
               style={{ backgroundImage: `url(${event.coverImage})` }}
             />
           ))}

@@ -92,7 +92,7 @@ export function DashboardShell({
   }, [mobileOpen]);
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] lg:grid lg:grid-cols-[236px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-[#f4f4f4] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
       <div
         className={cn(
           "fixed inset-0 z-50 lg:hidden",
@@ -150,7 +150,7 @@ export function DashboardShell({
               );
             })}
           </nav>
-          <div className="mt-auto p-4 pb-5">
+          {/*<div className="mt-auto p-4 pb-5">
             <div className="dashboard-wave-card rounded-[18px] p-5 text-white">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/12">
                 <Wallet className="h-5 w-5" />
@@ -162,13 +162,13 @@ export function DashboardShell({
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
-          </div>
+          </div>*/}
         </aside>
       </div>
 
       <aside className="hidden min-h-screen flex-col border-r border-[#ece8f3] bg-white lg:flex">
         <div className="px-8 pt-10">
-          <Logo />
+          <Logo/>
         </div>
         <nav className="mt-10 space-y-2 px-6">
           {links.map((link) => {
@@ -190,7 +190,7 @@ export function DashboardShell({
             );
           })}
         </nav>
-        <div className="mt-auto px-6 pb-6">
+        {/*<div className="mt-auto px-6 pb-6">
           <div className="dashboard-wave-card rounded-[18px] p-5 text-white">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/12">
               <Wallet className="h-5 w-5" />
@@ -202,7 +202,7 @@ export function DashboardShell({
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>
-        </div>
+        </div>*/}
       </aside>
 
       <div className="min-w-0">

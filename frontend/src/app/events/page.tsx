@@ -24,7 +24,7 @@ export default function EventsPage() {
   return (
     <div className="page-shell py-10 sm:py-12">
       <section>
-        <h1 className="font-display text-[2.45rem] font-semibold tracking-[-0.05em] text-ink">Explore Events</h1>
+        <h1 className="font-display text-2xl md:text-[2.45rem] font-semibold tracking-[-0.05em] text-ink">Explore Events</h1>
         <p className="mt-2 text-sm text-muted">Discover the best events happening near you</p>
 
         <div className="mt-6 flex flex-col gap-3 xl:flex-row xl:items-center">
@@ -34,7 +34,7 @@ export default function EventsPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search by event name, location or date"
-              className="w-full bg-transparent text-[#645f70] outline-none placeholder:text-[#b4aebe]"
+              className="w-full bg-transparent text-[#645f70] outline-none placeholder:text-[#b4aebe] py-3.5"
             />
           </div>
           <div className="flex flex-wrap gap-2">
@@ -44,7 +44,7 @@ export default function EventsPage() {
                 <button
                   key={filter}
                   className={cn(
-                    "public-filter-pill",
+                    "public-filter-pill max-md:my-1.5",
                     active ? "public-filter-pill-active" : "public-filter-pill-muted"
                   )}
                   onClick={() => setActiveFilter(filter)}
@@ -84,7 +84,7 @@ export default function EventsPage() {
       {data?.items.length ? (
         <div className="mt-10 flex justify-center">
           <Link href="/dashboard/events/new">
-            <Button variant="pill" size="sm">
+            <Button variant="pill" size="lg">
               Load More Events
             </Button>
           </Link>

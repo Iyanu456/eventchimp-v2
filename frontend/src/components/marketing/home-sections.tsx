@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
+  Check,
+  Star,
   CalendarDays,
   Eye,
   Megaphone,
@@ -128,27 +130,27 @@ export function HomeSections() {
   return (
     <div className="bg-white">
       <section className="page-shell grid gap-10 py-12 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:py-16 lg:mb-[2em]">
-        <div className="max-w-[560px]">
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#f6f2fc] px-4 py-2 text-sm font-semibold text-[#6d4e97]">
+        <div className="max-w-[560px] max-md:w-fit max-md:items max-md:mt-[1.5em]">
+          <p className="w-fit flex gap-2 rounded-full bg-[#f6f2fc] px-4 py-2 text-sm font-semibold text-[#6d4e97] max-md:mx-auto">
             <Sparkles className="h-4 w-4 text-accent" />
             Get started with EventChimp
-          </span>
-          <h1 className="font-display mt-6 text-[3.05rem] font-semibold leading-[0.93] tracking-[-0.07em] text-ink sm:text-[3.85rem] lg:text-[5rem]">
+          </p>
+          <h1 className="font-display mt-3 md:mt-6 text-[2.5rem] font-semibold leading-[1.25] max-md:mx-auto max-md:text-center md:leading-[0.93] tracking-[-0.07em] text-ink md:text-[3.85rem] lg:text-[5rem]">
             Events that people don&apos;t just attend,
             <br />
             they <span className="text-accent">Experience</span>
           </h1>
-          <p className="mt-6 max-w-[520px] text-base leading-8 text-muted lg:text-[1.08rem]">
+          <p className="mt-6 max-md:text-sm max-md:mx-auto max-md:text-center max-md:max-w-[80%] max-w-[520px] text-base leading-8 text-muted lg:text-[1.08rem]">
             Sell tickets, manage RSVP flow and present every event in a way that feels deliberate from the first glance.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex max-md:grid flex-wrap gap-3 max-md:w-full place-items-center">
             <Link href="/dashboard/events/new">
-              <Button variant="pill" size="lg">
+              <Button variant="pill" size="lg" className="max-md:w-[80vw] max-md:mx-auto">
                 Create an Event
               </Button>
             </Link>
             <Link href="/events">
-              <Button variant="secondary" size="lg">
+              <Button variant="secondary" size="lg" className="max-md:w-[80vw] rounded-full max-md:mx-auto">
                 Explore Events
               </Button>
             </Link>
@@ -168,9 +170,9 @@ export function HomeSections() {
             src="/Hero_section_mockup.png"
             alt="EventChimp mobile product preview"
             width={660}
-            height={520}
+            height={580}
             priority
-            className="h-auto w-full max-w-[520px] hover:scale-[1.02] transition-transform duration-300 object-contain"
+            className="h-auto w-full max-w-[580px] md:scale-[1.4] hover:scale-[1.2] transition-transform duration-300 object-contain"
           />
         </div>
       </section>
@@ -236,13 +238,16 @@ export function HomeSections() {
                   <feature.icon className="h-5 w-5" />
                 </span>
                 <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-ink">{feature.title}</h2>
+                
               </div>
-              <p className="mt-5 text-sm leading-7 text-muted">{feature.description}</p>
-              <ul className="mt-5 space-y-2.5 text-sm leading-7 text-muted">
+              
+              <p className="mt-5 leading-7 text-gray-800">{feature.description}</p>
+              
+              <ul className="mt-5 space-y-2.5 leading-7 text-gray-800">
                 {feature.points.map((point) => (
                   <li key={point} className="flex items-start gap-3">
-                    <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-accent" />
-                    <span>{point}</span>
+                    <Check className="my-auto mt-2 h-4 w-4 shrink-0 font-medium text-accent" />
+                    <span className="my-auto">{point}</span>
                   </li>
                 ))}
               </ul>
@@ -253,10 +258,10 @@ export function HomeSections() {
 
       <RibbonBand />
 
-      <section className="page-shell py-20 text-center">
+      <section className="page-shell py-16 pt-[6em] text-center">
         <div className="flex justify-center gap-2">
           {Array.from({ length: 5 }).map((_, index) => (
-            <span key={index} className="h-2 w-2 rounded-full bg-accent" />
+            <Star key={index} className=" text-accent" fill="currentColor" />
           ))}
         </div>
         <blockquote className="mx-auto mt-8 max-w-3xl text-[1.45rem] font-medium leading-10 tracking-[-0.03em] text-[#2d243d] sm:text-[1.8rem]">

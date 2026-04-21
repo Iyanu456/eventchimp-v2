@@ -5,6 +5,9 @@ import {
   CHECKOUT_ENDPOINTS,
   DASHBOARD_ENDPOINTS,
   EVENT_ENDPOINTS,
+  ORGANIZER_ENDPOINTS,
+  PAYMENT_ENDPOINTS,
+  REFUND_ENDPOINTS,
   TICKET_ENDPOINTS
 } from "./routes";
 import { crudRequest } from "./crud-requests";
@@ -14,12 +17,22 @@ import {
   AuthResponse,
   BrandingAssetType,
   BrandingTemplate,
+  CheckoutAnswer,
   Event,
+  EventCustomField,
   EventDetailResponse,
+  EventGuest,
   EventMessage,
+  EventRecurrence,
   EventsResponse,
+  EventStreaming,
   OrganizerDashboard,
+  PayoutBank,
+  PayoutStatus,
+  PricingBreakdown,
+  RefundRecord,
   Ticket,
+  TicketTier,
   Transaction,
   User
 } from "@/types/domain";
@@ -37,7 +50,7 @@ const buildSearchParams = (params?: Record<string, string | number | undefined>)
   return query ? `?${query}` : "";
 };
 
-const buildEventFormData = (payload: {
+export type EventPayload = {
   title: string;
   category: string;
   description: string;
@@ -49,8 +62,17 @@ const buildEventFormData = (payload: {
   isFree: boolean;
   status: string;
   tags: string[];
+  scheduleType: "single" | "recurring";
+  recurrence?: EventRecurrence | null;
+  attendanceMode: "in_person" | "virtual" | "hybrid";
+  streaming?: EventStreaming | null;
+  ticketTiers: TicketTier[];
+  guests: EventGuest[];
+  customFields: EventCustomField[];
   coverImage?: File | null;
-}) => {
+};
+
+const buildEventFormData = (payload: EventPayload) => {
   const formData = new FormData();
 
   Object.entries(payload).forEach(([key, value]) => {
@@ -61,8 +83,8 @@ const buildEventFormData = (payload: {
       return;
     }
 
-    if (key === "tags") {
-      formData.append("tags", JSON.stringify(value));
+    if (["tags", "recurrence", "streaming", "ticketTiers", "guests", "customFields"].includes(key)) {
+      formData.append(key, JSON.stringify(value));
       return;
     }
 
@@ -71,6 +93,20 @@ const buildEventFormData = (payload: {
 
   return formData;
 };
+
+export type InitializeCheckoutPayload = {
+  eventId: string;
+  ticketTypeId: string;
+  quantity: number;
+  attendeeFirstName: string;
+  attendeeLastName: string;
+  attendeeEmail: string;
+  attendeePhone?: string;
+  comment?: string;
+  customAnswers: CheckoutAnswer[];
+};
+
+export type PaymentQuotePayload = Pick<InitializeCheckoutPayload, "eventId" | "ticketTypeId" | "quantity">;
 
 export const request = {
   register: async (payload: {
@@ -95,61 +131,26 @@ export const request = {
   getEvents: async (params?: Record<string, string | number | undefined>) =>
     crudRequest.get<ApiEnvelope<EventsResponse>>(`${EVENT_ENDPOINTS.list}${buildSearchParams(params)}`),
 
-  getFeaturedEvents: async () =>
-    crudRequest.get<ApiEnvelope<Event[]>>(EVENT_ENDPOINTS.featured),
+  getFeaturedEvents: async () => crudRequest.get<ApiEnvelope<Event[]>>(EVENT_ENDPOINTS.featured),
 
   getEventBySlug: async (slug: string) =>
     crudRequest.get<ApiEnvelope<EventDetailResponse>>(EVENT_ENDPOINTS.detailBySlug(slug)),
 
-  createEvent: async (payload: {
-    title: string;
-    category: string;
-    description: string;
-    location: string;
-    startDate: string;
-    endDate: string;
-    capacity: number;
-    ticketPrice: number;
-    isFree: boolean;
-    status: string;
-    tags: string[];
-    coverImage?: File | null;
-  }) =>
+  createEvent: async (payload: EventPayload) =>
     crudRequest.post<ApiEnvelope<Event>, FormData>(EVENT_ENDPOINTS.list, buildEventFormData(payload), {
       headers: {
         "Content-Type": "multipart/form-data"
       }
     }),
 
-  updateEvent: async (
-    id: string,
-    payload: {
-      title: string;
-      category: string;
-      description: string;
-      location: string;
-      startDate: string;
-      endDate: string;
-      capacity: number;
-      ticketPrice: number;
-      isFree: boolean;
-      status: string;
-      tags: string[];
-      coverImage?: File | null;
-    }
-  ) =>
-    crudRequest.patch<ApiEnvelope<Event>, FormData>(
-      EVENT_ENDPOINTS.byId(id),
-      buildEventFormData(payload),
-      {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
+  updateEvent: async (id: string, payload: EventPayload) =>
+    crudRequest.patch<ApiEnvelope<Event>, FormData>(EVENT_ENDPOINTS.byId(id), buildEventFormData(payload), {
+      headers: {
+        "Content-Type": "multipart/form-data"
       }
-    ),
+    }),
 
-  deleteEvent: async (id: string) =>
-    crudRequest.delete<ApiEnvelope<null>>(EVENT_ENDPOINTS.byId(id)),
+  deleteEvent: async (id: string) => crudRequest.delete<ApiEnvelope<null>>(EVENT_ENDPOINTS.byId(id)),
 
   getEventPosts: async (eventId: string) =>
     crudRequest.get<ApiEnvelope<EventMessage[]>>(EVENT_ENDPOINTS.posts(eventId)),
@@ -157,36 +158,70 @@ export const request = {
   createEventPost: async (eventId: string, payload: { guestName?: string; content: string }) =>
     crudRequest.post<ApiEnvelope<EventMessage>, typeof payload>(EVENT_ENDPOINTS.posts(eventId), payload),
 
-  initializeCheckout: async (payload: { eventId: string }) =>
+  getPaymentQuote: async (payload: PaymentQuotePayload) =>
+    crudRequest.post<
+      ApiEnvelope<PricingBreakdown>,
+      typeof payload
+    >(PAYMENT_ENDPOINTS.quote, payload),
+
+  initializeCheckout: async (payload: InitializeCheckoutPayload) =>
     crudRequest.post<
       ApiEnvelope<{
         reference: string;
         checkoutUrl: string;
         mode: "live" | "mock";
-        pricing: {
-          ticketPrice: number;
-          serviceFee: number;
-          totalPaid: number;
-          organizerShare: number;
-          platformRevenue: number;
+        pricing: PricingBreakdown;
+        ticketType: {
+          id: string;
+          name: string;
+          quantity: number;
         };
       }>,
       typeof payload
-    >(CHECKOUT_ENDPOINTS.initialize, payload),
+    >(PAYMENT_ENDPOINTS.checkout, payload),
 
   verifyCheckout: async (payload: { reference: string }) =>
-    crudRequest.post<ApiEnvelope<{ transaction: Transaction; ticket: Ticket }>, typeof payload>(
-      CHECKOUT_ENDPOINTS.verify,
-      payload
+    crudRequest.get<ApiEnvelope<{ transaction: Transaction; order: Transaction; tickets: Ticket[] }>>(
+      PAYMENT_ENDPOINTS.verify(payload.reference)
     ),
 
   getOrganizerDashboard: async () =>
     crudRequest.get<ApiEnvelope<OrganizerDashboard>>(DASHBOARD_ENDPOINTS.organizer),
 
+  getPayoutBanks: async () => crudRequest.get<ApiEnvelope<PayoutBank[]>>(ORGANIZER_ENDPOINTS.banks),
+
+  getPayoutStatus: async () => crudRequest.get<ApiEnvelope<PayoutStatus>>(ORGANIZER_ENDPOINTS.payoutStatus),
+
+  resolvePayoutAccount: async (payload: {
+    bankCode: string;
+    accountNumber: string;
+  }) =>
+    crudRequest.post<
+      ApiEnvelope<{
+        accountName: string;
+        accountNumber: string;
+        bankCode: string;
+      }>,
+      typeof payload
+    >(ORGANIZER_ENDPOINTS.resolveAccount, payload),
+
+  upsertPayoutProfile: async (payload: {
+    bankCode: string;
+    accountNumber: string;
+  }) =>
+    crudRequest.post<ApiEnvelope<PayoutStatus>, typeof payload>(ORGANIZER_ENDPOINTS.payoutProfile, payload),
+
+  createRefund: async (payload: {
+    orderReference: string;
+    amount?: number;
+    reason?: string;
+    customerNote?: string;
+    merchantNote?: string;
+    includeServiceFee?: boolean;
+  }) => crudRequest.post<ApiEnvelope<RefundRecord>, typeof payload>(REFUND_ENDPOINTS.create, payload),
+
   getBrandingTemplates: async (eventId?: string) =>
-    crudRequest.get<ApiEnvelope<BrandingTemplate[]>>(
-      `${BRANDING_ENDPOINTS.templates}${buildSearchParams({ eventId })}`
-    ),
+    crudRequest.get<ApiEnvelope<BrandingTemplate[]>>(`${BRANDING_ENDPOINTS.templates}${buildSearchParams({ eventId })}`),
 
   generateBrandingAssetMetadata: async (payload: {
     eventId: string;
@@ -199,13 +234,9 @@ export const request = {
     logo?: string;
     accentColor?: string;
   }) =>
-    crudRequest.post<ApiEnvelope<BrandingTemplate["assets"][number]>, typeof payload>(
-      BRANDING_ENDPOINTS.templates,
-      payload
-    ),
+    crudRequest.post<ApiEnvelope<BrandingTemplate["assets"][number]>, typeof payload>(BRANDING_ENDPOINTS.templates, payload),
 
-  getMyTickets: async () =>
-    crudRequest.get<ApiEnvelope<Ticket[]>>(TICKET_ENDPOINTS.mine),
+  getMyTickets: async () => crudRequest.get<ApiEnvelope<Ticket[]>>(TICKET_ENDPOINTS.mine),
 
   getEventTickets: async (eventId: string) =>
     crudRequest.get<ApiEnvelope<Ticket[]>>(TICKET_ENDPOINTS.guestList(eventId)),
@@ -213,15 +244,11 @@ export const request = {
   checkInTicket: async (ticketId: string) =>
     crudRequest.patch<ApiEnvelope<Ticket>, undefined>(TICKET_ENDPOINTS.checkIn(ticketId)),
 
-  getAdminOverview: async () =>
-    crudRequest.get<ApiEnvelope<AdminOverview>>(ADMIN_ENDPOINTS.overview),
+  getAdminOverview: async () => crudRequest.get<ApiEnvelope<AdminOverview>>(ADMIN_ENDPOINTS.overview),
 
-  getAdminUsers: async () =>
-    crudRequest.get<ApiEnvelope<User[]>>(ADMIN_ENDPOINTS.users),
+  getAdminUsers: async () => crudRequest.get<ApiEnvelope<User[]>>(ADMIN_ENDPOINTS.users),
 
-  getAdminEvents: async () =>
-    crudRequest.get<ApiEnvelope<Event[]>>(ADMIN_ENDPOINTS.events),
+  getAdminEvents: async () => crudRequest.get<ApiEnvelope<Event[]>>(ADMIN_ENDPOINTS.events),
 
-  getAdminTransactions: async () =>
-    crudRequest.get<ApiEnvelope<Transaction[]>>(ADMIN_ENDPOINTS.transactions)
+  getAdminTransactions: async () => crudRequest.get<ApiEnvelope<Transaction[]>>(ADMIN_ENDPOINTS.transactions)
 };

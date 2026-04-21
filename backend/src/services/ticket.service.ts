@@ -26,6 +26,10 @@ export const checkInTicket = async (ticketId: string, actor: Express.User) => {
     throw new AppError("Ticket not found", 404);
   }
 
+  if (ticket.paymentStatus === "refunded") {
+    throw new AppError("Refunded tickets cannot be checked in", 400);
+  }
+
   const event = ticket.eventId as unknown as { organizerId: { toString: () => string } };
   if (actor.role !== "admin" && event.organizerId.toString() !== actor.id) {
     throw new AppError("You cannot check in guests for this event", 403);

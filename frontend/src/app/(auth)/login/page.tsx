@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, Lock, Mail, Sparkles } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, LoaderCircle, Lock, Mail, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthShell } from "@/components/layout/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppMutations } from "@/hooks/mutations/use-app-mutations";
+import Image from "next/image";
+import { getRequestErrorMessage } from "@/lib/utils";
 
 function AuthField({
   icon,
@@ -51,6 +53,12 @@ export default function LoginPage() {
         </p>
       }
     >
+      {login.isError || googleInitiate.isError ? (
+        <div className="mb-4 flex items-start gap-3 rounded-[16px] border border-[#f2c9cf] bg-[#fff5f6] px-4 py-3 text-sm text-[#8a3041]">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{getRequestErrorMessage(login.error ?? googleInitiate.error, "We couldn't sign you in right now.")}</p>
+        </div>
+      ) : null}
       <form
         className="space-y-4"
         onSubmit={async (event) => {
@@ -64,7 +72,15 @@ export default function LoginPage() {
             className="pl-11 pr-4"
             placeholder="Email address"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => {
+              if (login.isError) {
+                login.reset();
+              }
+              if (googleInitiate.isError) {
+                googleInitiate.reset();
+              }
+              setEmail(event.target.value);
+            }}
           />
         </AuthField>
         <AuthField icon={<Lock className="h-4 w-4" />}>
@@ -74,7 +90,15 @@ export default function LoginPage() {
               className="pl-11 pr-11"
               placeholder="Password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => {
+                if (login.isError) {
+                  login.reset();
+                }
+                if (googleInitiate.isError) {
+                  googleInitiate.reset();
+                }
+                setPassword(event.target.value);
+              }}
             />
             <button
               type="button"
@@ -87,7 +111,8 @@ export default function LoginPage() {
           </>
         </AuthField>
         <Button type="submit" className="w-full" variant="pill" size="lg" disabled={login.isPending}>
-          {login.isPending ? "Continue" : "Continue"}
+          {login.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+          Continue
         </Button>
       </form>
       <div className="mt-4 flex items-center gap-3">
@@ -98,13 +123,18 @@ export default function LoginPage() {
       <Button
         type="button"
         variant="secondary"
-        className="mt-4 w-full rounded-full"
+        className="mt-4 py-3 w-full rounded-full"
+        disabled={googleInitiate.isPending}
         onClick={async () => {
           const response = await googleInitiate.mutateAsync();
           window.location.href = response.data.authUrl;
         }}
       >
-        <Sparkles className="h-4 w-4 text-accent" />
+        {googleInitiate.isPending ? (
+          <LoaderCircle className="h-4 w-4 animate-spin" />
+        ) : (
+          <Image src="/google.svg" alt="Google icon" width={16} height={16} className="ml-2" />
+        )}
         Continue with Google
       </Button>
     </AuthShell>

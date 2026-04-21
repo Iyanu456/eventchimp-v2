@@ -12,6 +12,30 @@ type RegisterInput = {
   role: UserRole;
 };
 
+const ensureOrganizerProfile = async (user: UserDocument) => {
+  const existingProfile = await OrganizerProfileModel.findOne({ userId: user._id });
+  if (!existingProfile) {
+    await OrganizerProfileModel.create({
+      userId: user._id,
+      displayName: user.name
+    });
+  }
+};
+
+const ensureOrganizerUser = async (user: UserDocument) => {
+  if (user.role === "admin") {
+    return user;
+  }
+
+  if (user.role !== "organizer") {
+    user.role = "organizer";
+    await user.save();
+  }
+
+  await ensureOrganizerProfile(user);
+  return user;
+};
+
 const sanitizeUser = (user: UserDocument) => ({
   id: user._id.toString(),
   name: user.name,
@@ -38,19 +62,17 @@ export const registerUser = async (input: RegisterInput) => {
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
+  const normalizedRole = input.role === "admin" ? "admin" : "organizer";
   const user = await UserModel.create({
     name: input.name,
     email: input.email,
     passwordHash,
-    role: input.role,
+    role: normalizedRole,
     provider: "local"
   });
 
-  if (input.role === "organizer") {
-    await OrganizerProfileModel.create({
-      userId: user._id,
-      displayName: input.name
-    });
+  if (normalizedRole === "organizer") {
+    await ensureOrganizerProfile(user);
   }
 
   return issueAuthPayload(user);
@@ -67,7 +89,8 @@ export const loginUser = async (email: string, password: string) => {
     throw new AppError("Invalid email or password", 401);
   }
 
-  return issueAuthPayload(user);
+  const normalizedUser = await ensureOrganizerUser(user);
+  return issueAuthPayload(normalizedUser);
 };
 
 export const getOwnProfile = async (userId: string) => {
@@ -76,13 +99,14 @@ export const getOwnProfile = async (userId: string) => {
     throw new AppError("User not found", 404);
   }
 
+  const normalizedUser = await ensureOrganizerUser(user);
   const organizerProfile =
-    user.role === "organizer"
-      ? await OrganizerProfileModel.findOne({ userId: user._id })
+    normalizedUser.role === "organizer"
+      ? await OrganizerProfileModel.findOne({ userId: normalizedUser._id })
       : null;
 
   return {
-    ...sanitizeUser(user),
+    ...sanitizeUser(normalizedUser),
     organizerProfile
   };
 };
@@ -99,12 +123,14 @@ export const upsertGoogleUser = async (profile: {
       name: profile.name,
       email: profile.email,
       avatar: profile.picture ?? "",
-      provider: "google"
+      provider: "google",
+      role: "organizer"
     });
   } else if (profile.picture && !user.avatar) {
     user.avatar = profile.picture;
     await user.save();
   }
 
-  return issueAuthPayload(user);
+  const normalizedUser = await ensureOrganizerUser(user);
+  return issueAuthPayload(normalizedUser);
 };

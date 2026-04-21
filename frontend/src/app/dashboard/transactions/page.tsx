@@ -19,12 +19,12 @@ export default function DashboardTransactionsPage() {
               <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-ink">Revenue records</h2>
             </div>
             <DataTable
-              columns={["Reference", "Event", "Amount", "Status"]}
+              columns={["Reference", "Event", "Buyer Total", "Settlement"]}
               rows={data.transactions.map((transaction) => [
                 transaction.providerReference,
                 transaction.eventId?.title ?? "Event ticket",
-                formatCurrency(transaction.amount),
-                transaction.status
+                formatCurrency(transaction.buyerTotal ?? transaction.amount),
+                transaction.settlementStatus ?? transaction.status
               ])}
             />
           </div>

@@ -14,7 +14,7 @@ import { requireRole } from "../middleware/roles";
 import { upload } from "../middleware/upload";
 import { validate } from "../middleware/validate";
 import { asyncHandler } from "../utils/async-handler";
-import { eventMessageSchema, eventSchema } from "../validators/event.validator";
+import { eventMessageSchema, eventSchema, eventUpdateSchema } from "../validators/event.validator";
 
 export const eventRouter = Router();
 
@@ -61,6 +61,7 @@ eventRouter.patch(
   requireAuth,
   requireRole("organizer", "admin"),
   upload.single("coverImage"),
+  validate(eventUpdateSchema),
   asyncHandler(updateEventController)
 );
 eventRouter.delete(

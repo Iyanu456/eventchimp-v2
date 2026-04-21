@@ -22,9 +22,23 @@ export default function TicketsPage() {
               <h2 className="text-[1.35rem] font-semibold tracking-[-0.03em] text-ink">Guests and check-ins</h2>
             </div>
             <DataTable
-              columns={["Event", "Reference", "Amount", "Status", "Action"]}
+              columns={["Guest", "Ticket", "Reference", "Amount", "Status", "Action"]}
               rows={data.guestList.map((ticket) => [
-                ticket.eventId?.title ?? "Event ticket",
+                <div key={`${ticket._id}-guest`} className="space-y-1">
+                  <p className="font-medium text-ink">
+                    {[ticket.attendeeFirstName, ticket.attendeeLastName].filter(Boolean).join(" ") || "Guest attendee"}
+                  </p>
+                  <p className="text-xs text-muted">{ticket.attendeeEmail || "No email supplied"}</p>
+                  {ticket.customAnswers?.length ? (
+                    <p className="text-xs text-muted">
+                      {ticket.customAnswers.map((answer) => `${answer.label}: ${answer.value}`).join(" | ")}
+                    </p>
+                  ) : null}
+                </div>,
+                <div key={`${ticket._id}-ticket`} className="space-y-1">
+                  <p className="font-medium text-ink">{ticket.eventId?.title ?? "Event ticket"}</p>
+                  <p className="text-xs text-muted">{ticket.ticketTypeName ?? "General admission"}</p>
+                </div>,
                 ticket.paymentReference,
                 formatCurrency(ticket.totalPaid),
                 ticket.checkedIn ? "Checked in" : ticket.paymentStatus,

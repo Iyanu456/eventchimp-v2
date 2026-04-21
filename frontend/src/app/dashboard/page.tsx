@@ -88,7 +88,7 @@ export default function DashboardPage() {
           <div className="space-y-6">
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_265px]">
               <MetricCard label="Tickets Sold" value={String(data.metrics.attendeesCount)} note="Compared to last month" />
-              <MetricCard label="Revenue" value={formatCurrency(data.metrics.revenue)} note="Compared to last month" />
+              <MetricCard label="Organizer Revenue" value={formatCurrency(data.metrics.revenue)} note="Protected from processor fees" />
               <div className="surface-panel p-5">
                 <p className="text-[15px] font-semibold text-ink">Keys</p>
                 <div className="mt-4 space-y-3 text-sm text-muted">
@@ -149,9 +149,13 @@ export default function DashboardPage() {
                                 transaction.status === "success" ? "bg-[#dff7ef] text-success" : "bg-[#fff2df] text-[#ca8a2b]"
                               )}
                             >
-                              {transaction.status === "success" ? "Success" : "Pending"}
-                            </span>
-                          </div>
+                            {transaction.status === "success"
+                              ? "Success"
+                              : transaction.status === "refunded"
+                                ? "Refunded"
+                                : "Pending"}
+                          </span>
+                        </div>
                           <div className="text-left font-semibold text-ink md:text-right">
                             {formatCurrency(transaction.amount)}
                           </div>

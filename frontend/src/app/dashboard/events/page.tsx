@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CalendarDays, Eye, FileText, ListChecks, Crown } from "lucide-react";
+import { AlertCircle, CalendarDays, Eye, FileText, ListChecks, Crown } from "lucide-react";
 import { RoleGuard } from "@/components/layout/role-guard";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,28 @@ export default function DashboardEventsPage() {
     <RoleGuard roles={["organizer", "admin"]}>
       <DashboardShell title="Events">
         <div className="space-y-5">
+          {!data?.payout?.payoutReady ? (
+            <div className="flex flex-wrap items-start justify-between gap-4 rounded-[18px] border border-[#f1d8a8] bg-[#fff9ed] px-5 py-4 text-sm text-[#8a5a13]">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#ca8a2b] shadow-soft">
+                  <AlertCircle className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="font-semibold text-[#6f410a]">Complete your payout profile before selling paid tickets</p>
+                  <p className="mt-1 leading-6">
+                    Free events can still be created, but paid events require a verified payout profile in the Account tab.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/settings"
+                className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#6f410a] shadow-soft transition hover:text-accent"
+              >
+                Go to Account
+              </Link>
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-3">
             {filters.map((filter) => {
               const active = activeFilter === filter.value;

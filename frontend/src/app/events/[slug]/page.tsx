@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarDays, MapPin, Ticket, Users } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { CalendarDays, MapPin, Radio, Ticket, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -13,25 +14,33 @@ import { formatCurrency, formatEventDate } from "@/lib/utils";
 
 export default function EventDetailPage({ params }: { params: { slug: string } }) {
   const { data, isLoading } = useEventQuery(params.slug);
-  const { initializeCheckout, verifyCheckout, createEventPost } = useAppMutations();
+  const { createEventPost } = useAppMutations();
   const [guestName, setGuestName] = useState("");
   const [message, setMessage] = useState("");
+
+  const primaryTicket = useMemo(() => {
+    const tiers = [...(data?.event.ticketTiers ?? [])].sort((a, b) => a.order - b.order);
+    return tiers[0];
+  }, [data?.event.ticketTiers]);
 
   if (isLoading || !data) {
     return <div className="page-shell py-24 text-sm text-muted">Loading event...</div>;
   }
 
   const { event, messages } = data;
+  const descriptionMarkup = /<\/?[a-z][\s\S]*>/i.test(event.description)
+    ? event.description
+    : event.description
+        .split(/\n{2,}/)
+        .map((paragraph) => `<p>${paragraph}</p>`)
+        .join("");
 
   return (
     <div className="page-shell py-10">
       <section className="dashboard-wave-card rounded-[24px] px-5 py-6 text-white sm:px-7 sm:py-7 lg:px-9">
         <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
           <div className="rounded-[18px] shadow-soft">
-            <div
-              className="aspect-[0.86] rounded-[14px] bg-cover bg-center"
-              style={{ backgroundImage: `url(${event.coverImage})` }}
-            />
+            <div className="aspect-[0.86] rounded-[14px] bg-cover bg-center" style={{ backgroundImage: `url(${event.coverImage})` }} />
           </div>
         </div>
       </section>
@@ -43,7 +52,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
               {event.title}
             </h1>
             <div className="flex max-md:flex-col gap-3 max-md:mt-3.5 mt-2.5">
-               <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span>{formatEventDate(event.startDate)}</span>
               </div>
@@ -51,36 +60,34 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
                 <MapPin className="h-4 w-4" />
                 <span>{event.location}</span>
               </div>
+              {event.attendanceMode !== "in_person" && event.streaming ? (
+                <div className="flex items-center gap-2">
+                  <Radio className="h-4 w-4" />
+                  <span>{event.streaming.provider}</span>
+                </div>
+              ) : null}
             </div>
-           
           </div>
           <div className="space-y-3 max-md:mt-[2em]">
-            <Button 
-              variant="pill" 
-              size="lg" 
-              className="px-[4em] max-md:w-full flex gap-4"
-              onClick={async () => {
-                  const initialized = await initializeCheckout.mutateAsync({ eventId: event._id });
-                  if (initialized.data.mode === "live") {
-                    window.location.href = initialized.data.checkoutUrl;
-                    return;
-                  }
-
-                  await verifyCheckout.mutateAsync({ reference: initialized.data.reference });
-                }}
-              >Get Ticket <span className="max-md:block hidden">-</span> <span className="max-md:block hidden"> {event.isFree ? "FREE" : formatCurrency(event.ticketPrice)}</span> </Button>
-            <p className="max-md:hidden block text-center font-medium text-[2em]">{event.isFree ? "FREE" : formatCurrency(event.ticketPrice)}</p>
+            <Link href={`/events/${event.slug}/checkout`}>
+              <Button variant="pill" size="lg" className="px-[4em] max-md:w-full flex gap-4">
+                Get Ticket
+                <span className="max-md:block hidden">-</span>
+                <span className="max-md:block hidden">
+                  {event.isFree ? "FREE" : formatCurrency(primaryTicket?.price ?? event.ticketPrice)}
+                </span>
+              </Button>
+            </Link>
+            <p className="max-md:hidden block text-center font-medium text-[2em]">
+              {event.isFree ? "FREE" : formatCurrency(primaryTicket?.price ?? event.ticketPrice)}
+            </p>
           </div>
-            
-          
         </div>
-        
-            <hr className="my-[2em]"></hr>
-        <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">About this event</h2>
-        <p className="mt-4 max-w-4xl text-sm leading-8 text-[#585365] sm:text-base">{event.description}</p>
-      </section>
 
-      
+        <hr className="my-[2em]" />
+        <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">About this event</h2>
+        <div className="event-description mt-4 max-w-4xl text-sm leading-8 text-[#585365] sm:text-base" dangerouslySetInnerHTML={{ __html: descriptionMarkup }} />
+      </section>
 
       <section className="mt-10">
         <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">Gallery</h2>
@@ -94,6 +101,61 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
           ))}
         </div>
       </section>
+
+      {event.ticketTiers.length ? (
+        <section className="mt-10">
+          <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">Ticket options</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {event.ticketTiers
+              .slice()
+              .sort((a, b) => a.order - b.order)
+              .map((tier) => (
+                <div key={tier.id} className="surface-panel p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-lg font-semibold text-ink">{tier.name}</p>
+                      <p className="mt-1 text-sm text-muted">{tier.quantity} spots available</p>
+                    </div>
+                    <Badge tone="default">{tier.price === 0 ? "Free" : formatCurrency(tier.price)}</Badge>
+                  </div>
+                  {tier.perks.length ? (
+                    <ul className="mt-4 space-y-2 text-sm text-muted">
+                      {tier.perks.map((perk) => (
+                        <li key={perk} className="flex items-start gap-2">
+                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent" />
+                          <span>{perk}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+          </div>
+        </section>
+      ) : null}
+
+      {event.guests.length ? (
+        <section className="mt-10">
+          <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">Featured guests</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {event.guests.map((guest) => (
+              <div key={guest.id} className="surface-panel p-5">
+                <div className="flex items-center gap-4">
+                  <div
+                    className="h-16 w-16 rounded-[16px] bg-[#efeaf7] bg-cover bg-center"
+                    style={{ backgroundImage: guest.imageUrl ? `url(${guest.imageUrl})` : undefined }}
+                  />
+                  <div>
+                    <p className="text-lg font-semibold text-ink">{guest.name}</p>
+                    <p className="text-sm text-muted">{guest.role}</p>
+                  </div>
+                </div>
+                {guest.bio ? <p className="mt-4 text-sm leading-7 text-muted">{guest.bio}</p> : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-8 flex flex-col gap-4 border-t border-[#ded9e8] pt-5 text-sm text-[#5f5a69] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -111,9 +173,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
           <span>{event.attendeesCount}+ others going</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white">
-            I
-          </span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white">I</span>
           <span>Organized by {event.organizerId?.name ?? "Janet Events"}</span>
         </div>
       </section>
@@ -138,11 +198,7 @@ export default function EventDetailPage({ params }: { params: { slug: string } }
             }}
           >
             <Input placeholder="Your name" value={guestName} onChange={(event) => setGuestName(event.target.value)} />
-            <Textarea
-              placeholder="Share a short celebratory note"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-            />
+            <Textarea placeholder="Share a short celebratory note" value={message} onChange={(event) => setMessage(event.target.value)} />
             <Button variant="pill" type="submit">
               Post message
             </Button>

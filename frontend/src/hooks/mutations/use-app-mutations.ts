@@ -87,6 +87,22 @@ export const useAppMutations = () => {
     }
   });
 
+  const upsertPayoutProfile = useMutation({
+    mutationFn: request.upsertPayoutProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.organizer });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizer.payoutStatus });
+    }
+  });
+
+  const createRefund = useMutation({
+    mutationFn: request.createRefund,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.organizer });
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    }
+  });
+
   const createEventPost = useMutation({
     mutationFn: ({ eventId, payload }: { eventId: string; payload: { guestName?: string; content: string } }) =>
       request.createEventPost(eventId, payload),
@@ -125,6 +141,8 @@ export const useAppMutations = () => {
     deleteEvent,
     initializeCheckout,
     verifyCheckout,
+    upsertPayoutProfile,
+    createRefund,
     createEventPost,
     uploadImage,
     generateBrandingAssetMetadata,

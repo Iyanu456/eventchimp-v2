@@ -1,29 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   CalendarDays,
-  ChevronDown,
+  CircleDollarSign,
   CreditCard,
   LayoutDashboard,
+  LogOut,
   Menu,
   Palette,
   Search,
-  Settings,
   Ticket,
-  Wallet,
   X,
   Users,
-  ArrowRight,
-  CircleDollarSign,
+  UserCircle,
   type LucideIcon
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSessionStore } from "@/stores/session-store";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
+import { useAppMutations } from "@/hooks/mutations/use-app-mutations";
 
 type DashboardLink = {
   href: string;
@@ -33,14 +32,14 @@ type DashboardLink = {
 };
 
 const organizerLinks: DashboardLink[] = [
+  { href: "/dashboard/settings", label: "Account", icon: UserCircle },
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/events", label: "Events", icon: CalendarDays },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3, badge: "3" },
   { href: "/dashboard/tickets", label: "Tickets", icon: Ticket },
   { href: "/dashboard/transactions", label: "Transactions", icon: CreditCard },
   { href: "/dashboard/payouts", label: "Payouts", icon: CircleDollarSign },
-  { href: "/dashboard/branding", label: "Branding Kit", icon: Palette },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings }
+  { href: "/dashboard/branding", label: "Branding Kit", icon: Palette }
 ];
 
 const adminLinks: DashboardLink[] = [
@@ -52,6 +51,133 @@ const adminLinks: DashboardLink[] = [
 
 function isLinkActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && href !== "/admin" && pathname.startsWith(href));
+}
+
+function ProfileSummary({
+  displayName,
+  displayEmail,
+  onLogout
+}: {
+  displayName: string;
+  displayEmail: string;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="rounded-[18px] border border-line bg-[#faf8fd] p-3">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#ffcae4_0%,#e6aaff_100%)] text-xs font-semibold text-ink">
+          {displayName
+            .split(" ")
+            .map((part) => part[0])
+            .slice(0, 2)
+            .join("")
+            .toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink">{displayName}</p>
+          <p className="truncate text-xs text-muted">{displayEmail}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] bg-white px-3 py-2.5 text-sm font-semibold text-[#6e6a76] shadow-soft transition hover:bg-[#f3eff8] hover:text-ink"
+        onClick={onLogout}
+      >
+        <LogOut className="h-4 w-4 text-accent" />
+        Log out
+      </button>
+    </div>
+  );
+}
+
+function QuickSearch({
+  links,
+  onNavigate,
+  className
+}: {
+  links: DashboardLink[];
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const items = useMemo(
+    () =>
+      links.map((link) => ({
+        ...link,
+        keywords: `${link.label} ${link.href.replaceAll("/", " ")} ${
+          link.label === "Account" ? "settings profile bank payout setup" : ""
+        } ${link.label === "Events" ? "create manage publish paid tickets" : ""} ${
+          link.label === "Payouts" ? "settlement processing revenue withdrawals" : ""
+        } ${link.label === "Branding Kit" ? "assets templates design" : ""}`.toLowerCase()
+      })),
+    [links]
+  );
+  const matches = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return items.slice(0, 5);
+    }
+
+    return items.filter((item) => item.keywords.includes(normalizedQuery)).slice(0, 6);
+  }, [items, query]);
+  const showResults = focused || query.trim().length > 0;
+
+  const openItem = (href: string) => {
+    router.push(href);
+    setQuery("");
+    setFocused(false);
+    onNavigate?.();
+  };
+
+  return (
+    <div className={cn("relative w-full max-w-[320px]", className)}>
+      <div className="flex h-12 items-center gap-3 rounded-[14px] bg-[#f3f2f6] px-4 text-sm text-[#7f778d] ring-1 ring-transparent transition focus-within:bg-white focus-within:ring-accent/25">
+        <Search className="h-4 w-4 shrink-0 text-accent" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => window.setTimeout(() => setFocused(false), 150)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && matches[0]) {
+              event.preventDefault();
+              openItem(matches[0].href);
+            }
+          }}
+          placeholder="Search tools, tabs, actions..."
+          className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-[#aaa4b3]"
+        />
+      </div>
+
+      {showResults ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-[18px] border border-line bg-white p-2 shadow-[0_22px_60px_rgba(39,20,63,0.16)]">
+          {matches.length ? (
+            matches.map((item) => (
+              <button
+                key={item.href}
+                type="button"
+                className="flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left transition hover:bg-[#f6f3fa]"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => openItem(item.href)}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-accent/10 text-accent">
+                  <item.icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-ink">{item.label}</span>
+                  <span className="block truncate text-xs text-muted">{item.href}</span>
+                </span>
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-5 text-center text-sm text-muted">No matching dashboard tools</div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function DashboardShell({
@@ -66,8 +192,10 @@ export function DashboardShell({
   showHeading?: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const currentUser = useSessionStore((state) => state.currentUser);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { logout } = useAppMutations();
   const isAdmin = pathname.startsWith("/admin");
   const links = useMemo(() => (isAdmin ? adminLinks : organizerLinks), [isAdmin]);
   const displayName = currentUser?.name ?? "Whitney Stone";
@@ -91,8 +219,13 @@ export function DashboardShell({
     };
   }, [mobileOpen]);
 
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
+
   return (
-    <div className="min-h-screen bg-[#f4f4f4] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-[#f4f4f4] lg:pl-[240px]">
       <div
         className={cn(
           "fixed inset-0 z-50 lg:hidden",
@@ -124,12 +257,9 @@ export function DashboardShell({
             </button>
           </div>
           <div className="px-5">
-            <div className="flex h-12 items-center gap-3 rounded-[14px] bg-[#f3f2f6] px-4 text-sm text-[#b2abba]">
-              <Search className="h-4 w-4 text-accent" />
-              <span>Search anything...</span>
-            </div>
+            <QuickSearch links={links} onNavigate={() => setMobileOpen(false)} className="max-w-none" />
           </div>
-          <nav className="mt-6 space-y-2 px-4">
+          <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-4">
             {links.map((link) => {
               const active = isLinkActive(pathname, link.href);
               return (
@@ -150,6 +280,9 @@ export function DashboardShell({
               );
             })}
           </nav>
+          <div className="px-4 pb-5">
+            <ProfileSummary displayName={displayName} displayEmail={displayEmail} onLogout={handleLogout} />
+          </div>
           {/*<div className="mt-auto p-4 pb-5">
             <div className="dashboard-wave-card rounded-[18px] p-5 text-white">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/12">
@@ -166,11 +299,11 @@ export function DashboardShell({
         </aside>
       </div>
 
-      <aside className="hidden min-h-screen flex-col border-r border-[#ece8f3] bg-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[240px] flex-col border-r border-[#ece8f3] bg-white lg:flex">
         <div className="px-8 pt-10">
           <Logo/>
         </div>
-        <nav className="mt-10 space-y-2 px-6">
+        <nav className="mt-10 min-h-0 flex-1 space-y-2 overflow-y-auto px-6 pb-6">
           {links.map((link) => {
             const active = isLinkActive(pathname, link.href);
             return (
@@ -190,6 +323,9 @@ export function DashboardShell({
             );
           })}
         </nav>
+        <div className="px-5 pb-5">
+          <ProfileSummary displayName={displayName} displayEmail={displayEmail} onLogout={handleLogout} />
+        </div>
         {/*<div className="mt-auto px-6 pb-6">
           <div className="dashboard-wave-card rounded-[18px] p-5 text-white">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/12">
@@ -205,9 +341,9 @@ export function DashboardShell({
         </div>*/}
       </aside>
 
-      <div className="min-w-0">
-        <div className="border-b border-[#ece8f3] bg-white">
-          <div className="flex h-[96px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="flex h-screen min-w-0 flex-col overflow-hidden">
+        <div className="relative z-30 shrink-0 border-b border-[#ece8f3] bg-white/95 backdrop-blur-xl">
+          <div className="flex h-[88px] items-center justify-between gap-4 px-4 sm:px-6 lg:h-[96px] lg:px-8">
             <div className="flex items-center gap-3 lg:hidden">
               <button
                 className="inline-flex h-10 w-10 items-center justify-center rounded-[14px] border border-line text-[#6e6a76]"
@@ -218,30 +354,10 @@ export function DashboardShell({
               </button>
               <Logo />
             </div>
-            <div className="hidden h-12 w-full max-w-[250px] items-center gap-3 rounded-[14px] bg-[#f3f2f6] px-4 text-sm text-[#b2abba] md:flex">
-              <Search className="h-4 w-4 text-accent" />
-              <span>Search anything...</span>
-            </div>
-            <div className="ml-auto flex items-center gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="text-base font-semibold text-ink">{displayName}</p>
-                <p className="text-sm text-muted">{displayEmail}</p>
-              </div>
-              <div className="flex h-[56px] items-center gap-3 rounded-full border border-[#ece8f3] bg-white px-3 shadow-soft">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(135deg,#ffcae4_0%,#e6aaff_100%)] text-xs font-semibold text-ink">
-                  {displayName
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </div>
-                <ChevronDown className="h-4 w-4 text-[#7f798d]" />
-              </div>
-            </div>
+            <QuickSearch links={links} className="ml-auto hidden md:block" />
           </div>
         </div>
-        <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
           {showHeading && title ? (
             <div className="mb-6">
               <h1 className="font-display text-[2.2rem] font-semibold tracking-[-0.05em] text-ink">{title}</h1>
@@ -249,7 +365,7 @@ export function DashboardShell({
             </div>
           ) : null}
           {children}
-        </div>
+        </main>
       </div>
     </div>
   );

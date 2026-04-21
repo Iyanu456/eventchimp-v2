@@ -1,13 +1,18 @@
 import { Router } from "express";
 import {
+  checkoutQuoteController,
   initializeCheckoutController,
   paystackWebhookController,
   verifyCheckoutController
 } from "../controllers/checkout.controller";
-import { requireAuth } from "../middleware/auth";
+import { optionalAuth } from "../middleware/auth";
 import { validate } from "../middleware/validate";
 import { asyncHandler } from "../utils/async-handler";
-import { initializeCheckoutSchema, verifyCheckoutSchema } from "../validators/checkout.validator";
+import {
+  checkoutQuoteSchema,
+  initializeCheckoutSchema,
+  verifyCheckoutSchema
+} from "../validators/checkout.validator";
 
 export const checkoutRouter = Router();
 
@@ -25,21 +30,22 @@ export const checkoutRouter = Router();
  *     summary: Verify checkout and issue a ticket
  *     security:
  *       - bearerAuth: []
+ * /checkout/quote:
+ *   post:
+ *     tags: [Checkout]
+ *     summary: Calculate a server-side pricing quote
  * /checkout/webhook:
  *   post:
  *     tags: [Checkout]
  *     summary: Receive Paystack webhook events
  */
+checkoutRouter.post("/quote", validate(checkoutQuoteSchema), asyncHandler(checkoutQuoteController));
 checkoutRouter.post(
   "/initialize",
-  requireAuth,
+  optionalAuth,
   validate(initializeCheckoutSchema),
   asyncHandler(initializeCheckoutController)
 );
-checkoutRouter.post(
-  "/verify",
-  requireAuth,
-  validate(verifyCheckoutSchema),
-  asyncHandler(verifyCheckoutController)
-);
+checkoutRouter.post("/verify", validate(verifyCheckoutSchema), asyncHandler(verifyCheckoutController));
+checkoutRouter.get("/verify/:reference", asyncHandler(verifyCheckoutController));
 checkoutRouter.post("/webhook", asyncHandler(paystackWebhookController));

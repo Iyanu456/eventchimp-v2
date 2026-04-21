@@ -1,16 +1,20 @@
 "use client";
 
+import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 import { notFound, useRouter } from "next/navigation";
 import { RoleGuard } from "@/components/layout/role-guard";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { EventForm } from "@/components/events/event-form";
 import { useAppMutations } from "@/hooks/mutations/use-app-mutations";
 import { useOrganizerDashboardQuery } from "@/hooks/queries/use-organizer-dashboard-query";
+import { getRequestErrorMessage } from "@/lib/utils";
 
 export default function EditEventPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { data } = useOrganizerDashboardQuery();
   const { updateEvent } = useAppMutations();
+  const [formError, setFormError] = useState<string | null>(null);
   const event = data?.events.find((item) => item._id === params.id);
 
   if (data && !event) {
@@ -23,6 +27,12 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
         title="Edit Event"
         subtitle="Refine the event presentation, schedule and publishing settings."
       >
+        {formError ? (
+          <div className="mb-6 flex items-start gap-3 rounded-[16px] border border-[#f0ccd2] bg-[#fff6f7] px-4 py-3 text-sm text-[#923647]">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{formError}</p>
+          </div>
+        ) : null}
         {event ? (
           <EventForm
             submitLabel="Save changes"
@@ -38,18 +48,42 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
               ticketPrice: event.ticketPrice,
               isFree: event.isFree,
               status: event.status,
-              tags: event.tags
+              tags: event.tags,
+              scheduleType: event.scheduleType ?? "single",
+              recurrence: event.recurrence
+                ? {
+                    ...event.recurrence,
+                    until: event.recurrence.until ? event.recurrence.until.slice(0, 10) : ""
+                  }
+                : null,
+              attendanceMode: event.attendanceMode ?? "in_person",
+              streaming: event.streaming ?? null,
+              ticketTiers: event.ticketTiers,
+              guests: event.guests,
+              customFields: event.customFields
             }}
             onSubmit={async (values) => {
-              await updateEvent.mutateAsync({
-                id: event._id,
-                payload: {
-                  ...values,
-                  startDate: new Date(values.startDate).toISOString(),
-                  endDate: new Date(values.endDate).toISOString()
-                }
-              });
-              router.push("/dashboard/events");
+              setFormError(null);
+
+              try {
+                await updateEvent.mutateAsync({
+                  id: event._id,
+                  payload: {
+                    ...values,
+                    startDate: new Date(values.startDate).toISOString(),
+                    endDate: new Date(values.endDate).toISOString(),
+                    recurrence: values.scheduleType === "recurring" && values.recurrence
+                      ? {
+                          ...values.recurrence,
+                          until: values.recurrence.until ? new Date(values.recurrence.until).toISOString() : null
+                        }
+                      : null
+                  }
+                });
+                router.push("/dashboard/events");
+              } catch (error) {
+                setFormError(getRequestErrorMessage(error, "We couldn't save those event changes."));
+              }
             }}
           />
         ) : (

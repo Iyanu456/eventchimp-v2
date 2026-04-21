@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ArrowUpRight, CalendarDays, Compass, Menu, Sparkles, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ArrowUpRight, CalendarDays, Compass, LogOut, Menu, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 import { useSessionStore } from "@/stores/session-store";
+import { useAppMutations } from "@/hooks/mutations/use-app-mutations";
 
 const links = [
   { href: "/events", label: "Explore", icon: Compass },
@@ -16,8 +17,10 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const currentUser = useSessionStore((state) => state.currentUser);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { logout } = useAppMutations();
   const isAppRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup");
 
@@ -54,11 +57,24 @@ export function Navbar() {
               New season
             </span>
             {currentUser ? (
-              <Link href={currentUser.role === "admin" ? "/admin" : "/dashboard"}>
-                <Button variant="pill" size="sm">
-                  Open workspace
-                </Button>
-              </Link>
+              <>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-[#5e5968] transition hover:bg-[#f5effd] hover:text-ink"
+                  onClick={() => {
+                    logout();
+                    router.push("/");
+                  }}
+                >
+                  <LogOut className="h-4 w-4 text-accent" />
+                  Log out
+                </button>
+                <Link href={currentUser.role === "admin" ? "/admin" : "/dashboard"}>
+                  <Button variant="pill" size="sm">
+                    Open workspace
+                  </Button>
+                </Link>
+              </>
             ) : (
               <>
                 <Link href="/login">
@@ -97,11 +113,24 @@ export function Navbar() {
               </Link>
             ))}
             {currentUser ? (
-              <Link href={currentUser.role === "admin" ? "/admin" : "/dashboard"} onClick={() => setMobileOpen(false)}>
-                <Button variant="pill" className="mt-2 w-full">
-                  Open workspace
+              <div className="mt-2 grid gap-2">
+                <Link href={currentUser.role === "admin" ? "/admin" : "/dashboard"} onClick={() => setMobileOpen(false)}>
+                  <Button variant="pill" className="w-full">
+                    Open workspace
+                  </Button>
+                </Link>
+                <Button
+                  variant="secondary"
+                  className="w-full rounded-full"
+                  onClick={() => {
+                    setMobileOpen(false);
+                    logout();
+                    router.push("/");
+                  }}
+                >
+                  Log out
                 </Button>
-              </Link>
+              </div>
             ) : (
               <div className="mt-2 grid gap-2">
                 <Link href="/login" onClick={() => setMobileOpen(false)}>

@@ -4,9 +4,122 @@ import { EventModel } from "../models/Event";
 import { OrganizerProfileModel } from "../models/OrganizerProfile";
 import { UserModel } from "../models/User";
 
+const buildTicketTiers = (config: {
+  basePrice: number;
+  capacity: number;
+  isFree?: boolean;
+  premiumLabel?: string;
+}) => {
+  if (config.isFree || config.basePrice === 0) {
+    return [
+      {
+        id: "free-pass",
+        name: "Free pass",
+        price: 0,
+        quantity: Math.max(Math.floor(config.capacity * 0.9), 1),
+        order: 0,
+        perks: ["General event access", "Community networking"]
+      }
+    ];
+  }
+
+  return [
+    {
+      id: "general-admission",
+      name: "General admission",
+      price: config.basePrice,
+      quantity: Math.max(Math.floor(config.capacity * 0.75), 1),
+      order: 0,
+      perks: ["Main event access", "Standard seating"]
+    },
+    {
+      id: "vip-access",
+      name: config.premiumLabel ?? "VIP access",
+      price: Math.round(config.basePrice * 1.7),
+      quantity: Math.max(Math.floor(config.capacity * 0.25), 1),
+      order: 1,
+      perks: ["Priority check-in", "Closer seating", "Organizer perks"]
+    }
+  ];
+};
+
+const backfillExistingEvents = async () => {
+  const users = await UserModel.find({}, "_id email");
+  const organizerUser = users.find((user) => user.email === "organizer@eventchimp.com");
+  const organizerProfiles = await OrganizerProfileModel.find();
+
+  await Promise.all(
+    organizerProfiles.map(async (profile) => {
+      if (organizerUser && String(profile.userId) === String(organizerUser._id)) {
+        profile.payoutReady = true;
+        profile.payoutStatus = "verified";
+        profile.payoutProfile = {
+          businessName: profile.payoutProfile.businessName || profile.displayName,
+          bankCode: profile.payoutProfile.bankCode || "058",
+          bankName: profile.payoutProfile.bankName || "Guaranty Trust Bank",
+          accountNumber: profile.payoutProfile.accountNumber || "0123456789",
+          accountName: profile.payoutProfile.accountName || profile.displayName,
+          currency: "NGN",
+          subaccountCode: profile.payoutProfile.subaccountCode || "ACCT_STUDIO_MAYA",
+          subaccountId: profile.payoutProfile.subaccountId || 1,
+          settlementSchedule: profile.payoutProfile.settlementSchedule || "AUTO",
+          percentageCharge: 0,
+          verifiedAt: profile.payoutProfile.verifiedAt || new Date(),
+          reviewNote: profile.payoutProfile.reviewNote || ""
+        } as never;
+        await profile.save();
+      }
+    })
+  );
+
+  const events = await EventModel.find();
+  if (!events.length) {
+    return false;
+  }
+
+  const refreshedProfiles = await OrganizerProfileModel.find();
+  const payoutByOrganizer = new Map(
+    refreshedProfiles.map((profile) => [String(profile.userId), profile.payoutReady])
+  );
+
+  await Promise.all(
+    events.map(async (event) => {
+      const nextTiers =
+        event.ticketTiers?.length
+          ? event.ticketTiers
+          : buildTicketTiers({
+              basePrice: event.ticketPrice,
+              capacity: event.capacity,
+              isFree: event.isFree
+            });
+
+      const nextCustomFields =
+        event.customFields?.length
+          ? event.customFields
+          : [
+              {
+                id: "institution",
+                label: "School / organization",
+                type: "text",
+                required: false,
+                placeholder: "Enter your school, branch, or chapter",
+                options: []
+              }
+            ];
+
+      event.set("ticketTiers", nextTiers);
+      event.set("customFields", nextCustomFields);
+      event.set("payoutReady", event.isFree ? false : Boolean(payoutByOrganizer.get(String(event.organizerId))));
+      await event.save();
+    })
+  );
+
+  return true;
+};
+
 export const seedDatabase = async () => {
-  const eventsCount = await EventModel.countDocuments();
-  if (eventsCount > 0) {
+  const hasExistingEvents = await backfillExistingEvents();
+  if (hasExistingEvents) {
     return;
   }
 
@@ -36,7 +149,23 @@ export const seedDatabase = async () => {
   await OrganizerProfileModel.create({
     userId: organizer._id,
     displayName: "Studio Maya",
-    bio: "Design-forward private and brand experiences."
+    bio: "Design-forward private and brand experiences.",
+    payoutReady: true,
+    payoutStatus: "verified",
+    payoutProfile: {
+      businessName: "Studio Maya",
+      bankCode: "058",
+      bankName: "Guaranty Trust Bank",
+      accountNumber: "0123456789",
+      accountName: "Studio Maya",
+      currency: "NGN",
+      subaccountCode: "ACCT_STUDIO_MAYA",
+      subaccountId: 1,
+      settlementSchedule: "AUTO",
+      percentageCharge: 0,
+      verifiedAt: new Date(),
+      reviewNote: ""
+    }
   });
 
   const events = await EventModel.create([
@@ -57,7 +186,23 @@ export const seedDatabase = async () => {
       isFree: false,
       status: "published",
       attendeesCount: 86,
-      tags: ["rooftop", "dj", "premium"]
+      tags: ["rooftop", "dj", "premium"],
+      ticketTiers: buildTicketTiers({
+        basePrice: 18000,
+        capacity: 150,
+        premiumLabel: "Champagne deck"
+      }),
+      customFields: [
+        {
+          id: "guest-city",
+          label: "City / area",
+          type: "text",
+          required: false,
+          placeholder: "Where are you coming from?",
+          options: []
+        }
+      ],
+      payoutReady: true
     },
     {
       organizerId: organizer._id,
@@ -76,7 +221,23 @@ export const seedDatabase = async () => {
       isFree: false,
       status: "published",
       attendeesCount: 33,
-      tags: ["founders", "private", "dinner"]
+      tags: ["founders", "private", "dinner"],
+      ticketTiers: buildTicketTiers({
+        basePrice: 25000,
+        capacity: 70,
+        premiumLabel: "Founder circle"
+      }),
+      customFields: [
+        {
+          id: "company-name",
+          label: "Company / team",
+          type: "text",
+          required: true,
+          placeholder: "Enter company name",
+          options: []
+        }
+      ],
+      payoutReady: true
     },
     {
       organizerId: organizer._id,
@@ -95,7 +256,23 @@ export const seedDatabase = async () => {
       isFree: true,
       status: "published",
       attendeesCount: 142,
-      tags: ["community", "creator", "outdoor"]
+      tags: ["community", "creator", "outdoor"],
+      ticketTiers: buildTicketTiers({
+        basePrice: 0,
+        capacity: 220,
+        isFree: true
+      }),
+      customFields: [
+        {
+          id: "school-branch",
+          label: "School / branch",
+          type: "text",
+          required: false,
+          placeholder: "Enter your school or branch",
+          options: []
+        }
+      ],
+      payoutReady: false
     }
   ]);
 

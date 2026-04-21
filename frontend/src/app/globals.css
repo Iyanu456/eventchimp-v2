@@ -199,3 +199,61 @@ input[type="checkbox"] {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(136, 40, 210, 0.28);
 }
+
+.event-rich-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #9f98ac;
+}
+
+.event-rich-editor h2,
+.event-description h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 1.1rem 0 0.45rem;
+}
+
+.event-rich-editor h3,
+.event-description h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0.95rem 0 0.35rem;
+}
+
+.event-rich-editor p,
+.event-description p {
+  margin: 0.7rem 0;
+}
+
+.event-rich-editor ul,
+.event-rich-editor ol,
+.event-description ul,
+.event-description ol {
+  margin: 0.8rem 0;
+  padding-left: 1.25rem;
+}
+
+.event-rich-editor ul,
+.event-description ul {
+  list-style: disc;
+}
+
+.event-rich-editor ol,
+.event-description ol {
+  list-style: decimal;
+}
+
+.event-rich-editor blockquote,
+.event-description blockquote {
+  margin: 1rem 0;
+  border-left: 3px solid rgba(136, 40, 210, 0.22);
+  padding-left: 1rem;
+  color: #5e5968;
+}
+
+.event-rich-editor a,
+.event-description a {
+  color: var(--accent);
+  text-decoration: underline;
+}

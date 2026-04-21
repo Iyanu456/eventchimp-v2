@@ -129,13 +129,13 @@ export function HomeSections() {
 
   return (
     <div className="bg-white">
-      <section className="page-shell grid gap-10 py-12 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:py-16 lg:mb-[2em]">
-        <div className="max-w-[560px] max-md:w-fit max-md:items max-md:mt-[1.5em]">
-          <p className="w-fit flex gap-2 rounded-full bg-[#f6f2fc] px-4 py-2 text-sm font-semibold text-[#6d4e97] max-md:mx-auto">
-            <Sparkles className="h-4 w-4 text-accent" />
+      <section className="page-shell lg:w-[80vw] grid gap-10 py-12 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:py-16 lg:mb-[2em]">
+        <div className="max-w-[560px]  max-md:w-fit max-md:items max-md:mt-[1.5em] mx-auto">
+          <p className="w-fit flex gap-2 rounded-full bg-[#f6f2fc] px-4 py-2 text-sm font-semibold text-[#6d4e97] md:mx-auto lg:ml-0">
+            <Sparkles className="h-4 w-4 text-accent z-50" />
             Get started with EventChimp
           </p>
-          <h1 className="font-display mt-3 md:mt-6 text-[2.5rem] font-semibold leading-[1.25] max-md:mx-auto max-md:text-center md:leading-[0.93] tracking-[-0.07em] text-ink md:text-[3.85rem] lg:text-[5rem]">
+          <h1 className="font-display mt-3 md:mt-6 text-[2.5rem] font-semibold leading-[1.25] mx-auto text-center lg:text-left md:leading-[1.1] tracking-[-0.07em] text-ink md:text-[3.2em] lg:text-[3rem] xl:text-[4.3rem]">
             Events that people don&apos;t just attend,
             <br />
             they <span className="text-accent">Experience</span>
@@ -143,7 +143,7 @@ export function HomeSections() {
           <p className="mt-6 max-md:text-sm max-md:mx-auto max-md:text-center max-md:max-w-[80%] max-w-[520px] text-base leading-8 text-muted lg:text-[1.08rem]">
             Sell tickets, manage RSVP flow and present every event in a way that feels deliberate from the first glance.
           </p>
-          <div className="mt-8 flex max-md:grid flex-wrap gap-3 max-md:w-full place-items-center">
+          <div className="mt-8 flex max-md:grid flex-wrap gap-3 max-md:w-full place-items-center relative z-50 md:justify-center lg:justify-start">
             <Link href="/dashboard/events/new">
               <Button variant="pill" size="lg" className="max-md:w-[80vw] max-md:mx-auto">
                 Create an Event
@@ -172,7 +172,7 @@ export function HomeSections() {
             width={660}
             height={580}
             priority
-            className="h-auto w-full max-w-[580px] md:scale-[1.4] hover:scale-[1.2] transition-transform duration-300 object-contain"
+            className="h-auto w-full lg:max-w-[400px] xl:max-w-[580px] md:scale-[1.2] hover:scale-[1] transition-transform duration-300 object-contain z-10"
           />
         </div>
       </section>

@@ -3,7 +3,9 @@ import {
   getAdminEvents,
   getAdminOverview,
   getAdminTransactions,
-  getAdminUsers
+  getAdminUsers,
+  reviewOrganizerForAdmin,
+  suspendAdminEvent
 } from "../services/admin.service";
 import { apiResponse } from "../utils/api-response";
 
@@ -25,4 +27,14 @@ export const adminEventsController = async (_req: Request, res: Response) => {
 export const adminTransactionsController = async (_req: Request, res: Response) => {
   const payload = await getAdminTransactions();
   res.json(apiResponse(payload, "Admin transactions fetched successfully"));
+};
+
+export const suspendAdminEventController = async (req: Request, res: Response) => {
+  const payload = await suspendAdminEvent(String(req.params.id), req.body);
+  res.json(apiResponse(payload, "Admin event access updated successfully"));
+};
+
+export const adminOrganizerReviewController = async (req: Request, res: Response) => {
+  const payload = await reviewOrganizerForAdmin(String(req.params.userId), req.body);
+  res.json(apiResponse(payload, "Organizer review updated successfully"));
 };

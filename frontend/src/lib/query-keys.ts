@@ -12,6 +12,12 @@ export const queryKeys = {
     organizer: ["dashboard", "organizer"] as const,
     branding: ["dashboard", "branding"] as const
   },
+  organizer: {
+    payoutStatus: ["organizer", "payout-status"] as const,
+    banks: ["organizer", "banks"] as const,
+    resolveAccount: (bankCode: string, accountNumber: string) =>
+      ["organizer", "resolve-account", bankCode, accountNumber] as const
+  },
   tickets: {
     mine: ["tickets", "mine"] as const,
     event: (eventId: string) => ["tickets", eventId] as const

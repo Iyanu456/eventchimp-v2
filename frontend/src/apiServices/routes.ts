@@ -21,16 +21,34 @@ export const TICKET_ENDPOINTS = {
 };
 
 export const CHECKOUT_ENDPOINTS = {
+  quote: "/checkout/quote",
   initialize: "/checkout/initialize",
   verify: "/checkout/verify"
+};
+
+export const PAYMENT_ENDPOINTS = {
+  quote: "/payments/quote",
+  checkout: "/payments/checkout",
+  verify: (reference: string) => `/payments/verify/${reference}`
 };
 
 export const DASHBOARD_ENDPOINTS = {
   organizer: "/dashboard/organizer"
 };
 
+export const ORGANIZER_ENDPOINTS = {
+  banks: "/organizer/banks",
+  resolveAccount: "/organizer/resolve-account",
+  payoutProfile: "/organizer/payout-profile",
+  payoutStatus: "/organizer/payout-status"
+};
+
 export const BRANDING_ENDPOINTS = {
   templates: "/branding/templates"
+};
+
+export const REFUND_ENDPOINTS = {
+  create: "/refunds"
 };
 
 export const ADMIN_ENDPOINTS = {

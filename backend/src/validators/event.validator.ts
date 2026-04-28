@@ -44,7 +44,7 @@ const customFieldSchema = z.object({
   options: z.array(z.string()).optional().default([])
 });
 
-export const eventSchema = z.object({
+const eventBaseSchema = z.object({
   title: z.string().min(3),
   category: z.string().min(2),
   description: z.string().min(3),
@@ -54,7 +54,7 @@ export const eventSchema = z.object({
   capacity: z.coerce.number().min(1),
   ticketPrice: z.coerce.number().min(0).optional().default(0),
   isFree: z.coerce.boolean().optional().default(false),
-  status: z.enum(EVENT_STATUSES).optional().default("draft"),
+  status: z.enum(EVENT_STATUSES).optional().default("published"),
   tags: z.union([z.array(z.string()), z.string()]).optional().default([]),
   scheduleType: z.enum(["single", "recurring"]).optional().default("single"),
   recurrence: jsonStringOr(recurrenceSchema).optional(),
@@ -65,7 +65,54 @@ export const eventSchema = z.object({
   customFields: jsonStringOr(z.array(customFieldSchema)).optional().default([])
 });
 
-export const eventUpdateSchema = eventSchema.partial();
+const addDateRangeIssues = (
+  data: { startDate?: string; endDate?: string },
+  context: z.RefinementCtx,
+  options: { requireFutureStart: boolean }
+) => {
+  const start = data.startDate ? new Date(data.startDate) : null;
+  const end = data.endDate ? new Date(data.endDate) : null;
+
+  if (start && Number.isNaN(start.getTime())) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["startDate"],
+      message: "Choose a valid event start date and time"
+    });
+  }
+
+  if (end && Number.isNaN(end.getTime())) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endDate"],
+      message: "Choose a valid event end date and time"
+    });
+  }
+
+  if (options.requireFutureStart && start && start.getTime() < Date.now() - 60 * 1000) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["startDate"],
+      message: "Event start time cannot be in the past"
+    });
+  }
+
+  if (start && end && end <= start) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endDate"],
+      message: "Event end time must be after the start time"
+    });
+  }
+};
+
+export const eventSchema = eventBaseSchema.superRefine((data, context) => {
+  addDateRangeIssues(data, context, { requireFutureStart: true });
+});
+
+export const eventUpdateSchema = eventBaseSchema.partial().superRefine((data, context) => {
+  addDateRangeIssues(data, context, { requireFutureStart: false });
+});
 
 export const eventMessageSchema = z.object({
   guestName: z.string().optional().default(""),

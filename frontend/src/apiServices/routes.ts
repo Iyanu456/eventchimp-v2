@@ -11,7 +11,14 @@ export const EVENT_ENDPOINTS = {
   featured: "/events/featured",
   detailBySlug: (slug: string) => `/events/slug/${slug}`,
   byId: (id: string) => `/events/${id}`,
-  posts: (eventId: string) => `/events/${eventId}/messages`
+  posts: (eventId: string) => `/events/${eventId}/messages`,
+  collaborators: (eventId: string) => `/events/${eventId}/collaborators`,
+  inviteCollaborator: (eventId: string) => `/events/${eventId}/collaborators/invite`,
+  acceptInvitation: (token: string) => `/events/invitations/${token}/accept`,
+  metrics: (eventId: string) => `/events/${eventId}/metrics`,
+  settings: (eventId: string) => `/events/${eventId}/settings`,
+  scanTicket: (eventId: string) => `/events/${eventId}/tickets/scan`,
+  checkInByToken: (eventId: string) => `/events/${eventId}/tickets/check-in`
 };
 
 export const TICKET_ENDPOINTS = {
@@ -40,7 +47,8 @@ export const ORGANIZER_ENDPOINTS = {
   banks: "/organizer/banks",
   resolveAccount: "/organizer/resolve-account",
   payoutProfile: "/organizer/payout-profile",
-  payoutStatus: "/organizer/payout-status"
+  payoutStatus: "/organizer/payout-status",
+  settings: "/organizer/settings"
 };
 
 export const BRANDING_ENDPOINTS = {

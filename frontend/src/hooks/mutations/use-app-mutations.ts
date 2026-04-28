@@ -95,6 +95,15 @@ export const useAppMutations = () => {
     }
   });
 
+  const updateOrganizerSettings = useMutation({
+    mutationFn: request.updateOrganizerSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.organizer });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizer.payoutStatus });
+      queryClient.invalidateQueries({ queryKey: queryKeys.organizer.settings });
+    }
+  });
+
   const createRefund = useMutation({
     mutationFn: request.createRefund,
     onSuccess: () => {
@@ -130,6 +139,31 @@ export const useAppMutations = () => {
     }
   });
 
+  const inviteEventCollaborator = useMutation({
+    mutationFn: ({ eventId, payload }: { eventId: string; payload: { email: string; role: "manager" | "scanner" | "viewer" } }) =>
+      request.inviteEventCollaborator(eventId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.collaborators(variables.eventId) });
+    }
+  });
+
+  const acceptEventInvitation = useMutation({
+    mutationFn: request.acceptEventInvitation
+  });
+
+  const scanEventTicket = useMutation({
+    mutationFn: ({ eventId, qrToken }: { eventId: string; qrToken: string }) => request.scanEventTicket(eventId, { qrToken })
+  });
+
+  const checkInEventTicket = useMutation({
+    mutationFn: ({ eventId, qrToken }: { eventId: string; qrToken: string }) => request.checkInEventTicket(eventId, { qrToken }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.metrics(variables.eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.event(variables.eventId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.organizer });
+    }
+  });
+
   return {
     register,
     login,
@@ -142,10 +176,15 @@ export const useAppMutations = () => {
     initializeCheckout,
     verifyCheckout,
     upsertPayoutProfile,
+    updateOrganizerSettings,
     createRefund,
     createEventPost,
     uploadImage,
     generateBrandingAssetMetadata,
-    checkInTicket
+    checkInTicket,
+    inviteEventCollaborator,
+    acceptEventInvitation,
+    scanEventTicket,
+    checkInEventTicket
   };
 };

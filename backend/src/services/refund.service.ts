@@ -88,7 +88,10 @@ export const createRefund = async (actor: Express.User, input: CreateRefundInput
       order.serviceFeeRefunded = true;
     }
 
-    await TicketModel.updateMany({ orderId: order._id }, { $set: { paymentStatus: "refunded" } });
+      await TicketModel.updateMany(
+        { orderId: order._id },
+        { $set: { paymentStatus: "refunded", status: "refunded" } }
+      );
   }
 
   await order.save();

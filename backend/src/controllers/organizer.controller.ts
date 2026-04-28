@@ -3,6 +3,7 @@ import {
   getOrganizerPayoutStatus,
   getPayoutBanks,
   resolveOrganizerPayoutAccount,
+  updateOrganizerSettings,
   upsertOrganizerPayoutProfile
 } from "../services/payout.service";
 import { apiResponse } from "../utils/api-response";
@@ -25,4 +26,9 @@ export const resolvePayoutAccountController = async (req: Request, res: Response
 export const upsertPayoutProfileController = async (req: Request, res: Response) => {
   const payload = await upsertOrganizerPayoutProfile(req.user!.id, req.body);
   res.status(201).json(apiResponse(payload, "Payout profile saved successfully"));
+};
+
+export const updateOrganizerSettingsController = async (req: Request, res: Response) => {
+  const payload = await updateOrganizerSettings(req.user!.id, req.body);
+  res.json(apiResponse(payload, "Organizer settings updated successfully"));
 };

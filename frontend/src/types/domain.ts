@@ -151,6 +151,8 @@ export type Ticket = {
   _id: string;
   paymentReference: string;
   paymentStatus: "pending" | "success" | "failed" | "refunded";
+  status?: "issued" | "checked_in" | "refunded" | "voided";
+  ticketCode?: string;
   qrCode: string;
   totalPaid: number;
   ticketPrice: number;
@@ -166,6 +168,7 @@ export type Ticket = {
   comment?: string;
   checkedIn: boolean;
   checkedInAt?: string | null;
+  checkedInBy?: string | null;
   eventId?: Event;
 };
 
@@ -220,6 +223,67 @@ export type PayoutStatus = {
   subaccountCode: string;
   settlementSchedule: string;
   reviewNote: string;
+  organizerNotifications?: {
+    ticketPurchaseEmail: boolean;
+  };
+};
+
+export type EventCollaborator = {
+  id: string;
+  role: "owner" | "manager" | "scanner" | "viewer";
+  acceptedAt?: string | Date | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string | null;
+  } | null;
+};
+
+export type EventInvitation = {
+  id: string;
+  email: string;
+  role: "manager" | "scanner" | "viewer";
+  status: "pending" | "accepted" | "revoked" | "expired";
+  expiresAt: string;
+};
+
+export type EventCollaboratorResponse = {
+  currentRole: "owner" | "manager" | "scanner" | "viewer" | "admin";
+  collaborators: EventCollaborator[];
+  invitations: EventInvitation[];
+};
+
+export type EventMetrics = {
+  accessLevel: "full" | "scanner";
+  totalTicketsSold: number;
+  totalOrders: number;
+  checkIns: number;
+  checkInRate: number;
+  remainingGuests: number;
+  ticketTierBreakdown: Array<{
+    ticketTypeId: string;
+    ticketTypeName: string;
+    ticketsSold: number;
+    grossRevenue: number;
+    organizerNetRevenue: number;
+    serviceFees: number;
+  }>;
+  salesTimeline: Array<{
+    date: string;
+    totalOrders: number;
+    totalTicketsSold: number;
+    grossRevenue: number;
+    organizerNetRevenue: number;
+    serviceFees: number;
+  }>;
+  grossRevenue?: number;
+  organizerNetRevenue?: number;
+  serviceFees?: number;
+  refunds?: {
+    count: number;
+    amount: number;
+  };
 };
 
 export type RefundRecord = {

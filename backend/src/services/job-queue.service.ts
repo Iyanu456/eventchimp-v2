@@ -48,6 +48,9 @@ export const enqueueJob = async <TPayload>(
   jobId?: string
 ) => {
   if (!isQueueEnabled) {
+    if (env.NODE_ENV === "production") {
+      throw new Error(`Queue delivery requires REDIS_URL in production for ${queueName}:${jobName}`);
+    }
     await inlineHandler(payload);
     return;
   }

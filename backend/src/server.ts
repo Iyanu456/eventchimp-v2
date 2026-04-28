@@ -6,7 +6,11 @@ import { fulfillOrderTickets } from "./services/fulfillment.service";
 import { processWebhookLog } from "./services/payment.service";
 import { reconcileOrder } from "./services/reconciliation.service";
 import { seedDatabase } from "./services/seed.service";
-import { sendTicketConfirmationEmail } from "./services/email.service";
+import {
+  sendInvitationEmail,
+  sendOrderConfirmationEmail,
+  sendOrganizerPurchaseEmail
+} from "./services/email.service";
 
 const startServer = async () => {
   await connectDatabase();
@@ -23,16 +27,14 @@ const startServer = async () => {
       }
     },
     "email-delivery": {
-      "ticket-confirmation": async (payload) => {
-        await sendTicketConfirmationEmail(
-          payload as {
-            to: string;
-            name: string;
-            eventTitle: string;
-            amount: number;
-            qrCode: string;
-          }
-        );
+      "order-confirmation": async (payload) => {
+        await sendOrderConfirmationEmail(payload as Parameters<typeof sendOrderConfirmationEmail>[0]);
+      },
+      "organizer-purchase-notification": async (payload) => {
+        await sendOrganizerPurchaseEmail(payload as Parameters<typeof sendOrganizerPurchaseEmail>[0]);
+      },
+      "event-invitation": async (payload) => {
+        await sendInvitationEmail(payload as Parameters<typeof sendInvitationEmail>[0]);
       }
     },
     reconciliation: {

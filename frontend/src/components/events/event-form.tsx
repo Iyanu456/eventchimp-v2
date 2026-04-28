@@ -4,11 +4,15 @@ import { useMemo, useState } from "react";
 import {
   AlertCircle,
   CalendarDays,
+  Clock3,
+  Globe2,
   ImagePlus,
   ListChecks,
   MapPin,
+  MonitorPlay,
   Plus,
   Repeat,
+  ShieldCheck,
   Ticket,
   Trash2,
   Users,
@@ -16,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateTimePicker, toDateTimeInputValue } from "@/components/ui/date-time-picker";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -108,58 +113,137 @@ const getPlainText = (value: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-const validateEventForm = (values: EventFormValues, ticketTiers: TicketTier[]) => {
-  const errors: string[] = [];
+const getDateTimeError = (startDate: string, endDate: string) => {
+  const now = new Date();
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
+
+  if (start && Number.isNaN(start.getTime())) {
+    return { start: "Choose a valid start date and time.", end: null };
+  }
+
+  if (end && Number.isNaN(end.getTime())) {
+    return { start: null, end: "Choose a valid end date and time." };
+  }
+
+  if (start && start.getTime() < now.getTime() - 60 * 1000) {
+    return { start: "Start time cannot be in the past.", end: null };
+  }
+
+  if (start && end && end <= start) {
+    return { start: null, end: "End time must be after the start time." };
+  }
+
+  return { start: null, end: null };
+};
+
+type EventFormError = {
+  field: string;
+  message: string;
+};
+
+const validateEventForm = (values: EventFormValues, ticketTiers: TicketTier[]): EventFormError[] => {
+  const errors: EventFormError[] = [];
 
   if (!values.title.trim()) {
-    errors.push("Add an event title so attendees know what they are registering for.");
+    errors.push({
+      field: "title",
+      message: "Add an event title so attendees know what they are registering for."
+    });
   }
 
   if (!values.category.trim()) {
-    errors.push("Choose a category to help position the event properly.");
+    errors.push({
+      field: "category",
+      message: "Choose a category to help position the event properly."
+    });
   }
 
   if (!getPlainText(values.description)) {
-    errors.push("Write a description before publishing so the event page does not feel empty.");
+    errors.push({
+      field: "description",
+      message: "Write a description before publishing so the event page does not feel empty."
+    });
   }
 
   if (!values.location.trim()) {
-    errors.push("Add a venue or location so guests know where the event is happening.");
+    errors.push({
+      field: "location",
+      message: "Add a venue or location so guests know where the event is happening."
+    });
   }
 
   if (!values.startDate) {
-    errors.push("Set a start date and time for the event.");
+    errors.push({
+      field: "startDate",
+      message: "Set a start date and time for the event."
+    });
   }
 
   if (!values.endDate) {
-    errors.push("Set an end date and time for the event.");
+    errors.push({
+      field: "endDate",
+      message: "Set an end date and time for the event."
+    });
   }
 
-  if (values.startDate && values.endDate && new Date(values.endDate) <= new Date(values.startDate)) {
-    errors.push("The event end time has to be after the start time.");
+  const dateError = getDateTimeError(values.startDate, values.endDate);
+  if (dateError.start) {
+    errors.push({
+      field: "startDate",
+      message: dateError.start
+    });
+  }
+  if (dateError.end) {
+    errors.push({
+      field: "endDate",
+      message: dateError.end
+    });
   }
 
   if (!Number.isFinite(values.capacity) || values.capacity < 1) {
-    errors.push("Capacity should be at least one attendee.");
+    errors.push({
+      field: "capacity",
+      message: "Capacity should be at least one attendee."
+    });
   }
 
   if (!ticketTiers.length) {
-    errors.push("Add at least one ticket tier before saving the event.");
+    errors.push({
+      field: "ticketTiers",
+      message: "Add at least one ticket tier before saving the event."
+    });
   }
 
-  if (
-    ticketTiers.some(
-      (tier) =>
-        !tier.name.trim() ||
-        !Number.isFinite(tier.quantity) ||
-        tier.quantity < 1 ||
-        !Number.isFinite(tier.order) ||
-        tier.order < 0 ||
-        tier.price < 0
-    )
-  ) {
-    errors.push("Complete the ticket setup with a name, price, quantity, and valid order for each tier.");
-  }
+  ticketTiers.forEach((tier) => {
+    if (!tier.name.trim()) {
+      errors.push({
+        field: `ticket-${tier.id}-name`,
+        message: "Give this ticket tier a clear name."
+      });
+    }
+
+    if (!Number.isFinite(tier.price) || tier.price < 0) {
+      errors.push({
+        field: `ticket-${tier.id}-price`,
+        message: "Ticket price must be zero or higher."
+      });
+    }
+
+    if (!Number.isFinite(tier.quantity) || tier.quantity < 1) {
+      errors.push({
+        field: `ticket-${tier.id}-quantity`,
+        message: "Available quantity should be at least one ticket."
+      });
+    }
+
+    if (!Number.isFinite(tier.order) || tier.order < 0) {
+      errors.push({
+        field: `ticket-${tier.id}-order`,
+        message: "Display order must be zero or higher."
+      });
+    }
+  });
 
   return errors;
 };
@@ -174,7 +258,7 @@ const defaultValues: EventFormValues = {
   capacity: 100,
   ticketPrice: 0,
   isFree: true,
-  status: "draft",
+  status: "published",
   tags: [],
   coverImage: null,
   scheduleType: "single",
@@ -200,19 +284,29 @@ const defaultValues: EventFormValues = {
 function Field({
   label,
   hint,
+  error,
+  fieldId,
   children
 }: {
   label: string;
   hint?: string;
+  error?: string | null;
+  fieldId?: string;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-2.5">
+    <label className="block space-y-2.5" data-error-anchor={fieldId}>
       <div>
         <p className="text-sm font-semibold text-ink">{label}</p>
         {hint ? <p className="mt-1 text-xs leading-6 text-muted">{hint}</p> : null}
       </div>
       {children}
+      {error ? (
+        <p className="flex items-start gap-2 rounded-[12px] border border-[#f0ccd2] bg-[#fff6f7] px-3 py-2 text-xs font-medium leading-5 text-[#923647]">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      ) : null}
     </label>
   );
 }
@@ -269,12 +363,16 @@ export function EventForm({
   initialValues,
   isSubmitting,
   submitLabel,
-  onSubmit
+  onSubmit,
+  payoutReady = true,
+  showStatusField = true
 }: {
   initialValues?: Partial<EventFormValues>;
   isSubmitting?: boolean;
   submitLabel: string;
   onSubmit: (values: EventFormValues) => void;
+  payoutReady?: boolean;
+  showStatusField?: boolean;
 }) {
   const mergedInitialValues: EventFormValues = {
     ...defaultValues,
@@ -289,6 +387,7 @@ export function EventForm({
   const [form, setForm] = useState<EventFormValues>(mergedInitialValues);
   const [tagInput, setTagInput] = useState(mergedInitialValues.tags.join(", "));
   const [formNotice, setFormNotice] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [categoryMode, setCategoryMode] = useState<"preset" | "other">(
     EVENT_CATEGORY_OPTIONS.includes(mergedInitialValues.category as (typeof EVENT_CATEGORY_OPTIONS)[number])
       ? "preset"
@@ -314,6 +413,29 @@ export function EventForm({
 
   const lowestTierPrice = Math.min(...normalizedTicketTiers.map((tier) => tier.price));
   const allTiersFree = normalizedTicketTiers.every((tier) => tier.price === 0);
+  const minimumDateTime = useMemo(() => toDateTimeInputValue(new Date()), []);
+  const dateTimeError = getDateTimeError(form.startDate, form.endDate);
+  const startDateError = fieldErrors.startDate ?? dateTimeError.start;
+  const endDateError = fieldErrors.endDate ?? dateTimeError.end;
+
+  const clearFieldError = (field: string) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const scrollToFieldError = (field: string) => {
+    requestAnimationFrame(() => {
+      const target = document.querySelector<HTMLElement>(`[data-error-anchor="${field}"]`);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const focusTarget = target?.querySelector<HTMLElement>("input, textarea, button, [contenteditable='true']");
+      focusTarget?.focus({ preventScroll: true });
+    });
+  };
 
   const updateTicketTier = (tierId: string, patch: Partial<TicketTier>) => {
     setForm((current) => ({
@@ -351,12 +473,20 @@ export function EventForm({
         const validationErrors = validateEventForm(nextValues, normalizedTicketTiers);
 
         if (validationErrors.length) {
-          setFormNotice(validationErrors[0]);
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          const nextErrors = validationErrors.reduce<Record<string, string>>((acc, item) => {
+            if (!acc[item.field]) {
+              acc[item.field] = item.message;
+            }
+            return acc;
+          }, {});
+          setFieldErrors(nextErrors);
+          setFormNotice("Some required details are missing. We took you to the first field that needs attention.");
+          scrollToFieldError(validationErrors[0].field);
           return;
         }
 
         setFormNotice(null);
+        setFieldErrors({});
         onSubmit({
           ...nextValues
         });
@@ -383,12 +513,21 @@ export function EventForm({
           description="Shape the public story first. This is where organizers define what the event is, who it is for, and what makes it worth showing up for."
         >
           <div className="grid gap-5 md:grid-cols-2">
-            <Field label="Event title">
-              <Input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
+            <Field label="Event title" fieldId="title" error={fieldErrors.title}>
+              <Input
+                value={form.title}
+                className={fieldErrors.title ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                aria-invalid={Boolean(fieldErrors.title)}
+                onChange={(event) => {
+                  clearFieldError("title");
+                  setForm({ ...form, title: event.target.value });
+                }}
+              />
             </Field>
-            <Field label="Category">
+            <Field label="Category" fieldId="category" error={fieldErrors.category}>
               <div className="space-y-3">
                 <Select
+                  className={fieldErrors.category ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
                   value={
                     categoryMode === "other" || !EVENT_CATEGORY_OPTIONS.includes(form.category as (typeof EVENT_CATEGORY_OPTIONS)[number])
                       ? "other"
@@ -398,11 +537,13 @@ export function EventForm({
                     const nextValue = event.target.value;
                     if (nextValue === "other") {
                       setCategoryMode("other");
+                      clearFieldError("category");
                       setForm((current) => ({ ...current, category: "" }));
                       return;
                     }
 
                     setCategoryMode("preset");
+                    clearFieldError("category");
                     setForm((current) => ({ ...current, category: nextValue }));
                   }}
                 >
@@ -417,7 +558,12 @@ export function EventForm({
                 {categoryMode === "other" ? (
                   <Input
                     value={form.category}
-                    onChange={(event) => setForm({ ...form, category: event.target.value })}
+                    className={fieldErrors.category ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                    aria-invalid={Boolean(fieldErrors.category)}
+                    onChange={(event) => {
+                      clearFieldError("category");
+                      setForm({ ...form, category: event.target.value });
+                    }}
                     placeholder="Enter custom category"
                   />
                 ) : null}
@@ -425,17 +571,34 @@ export function EventForm({
             </Field>
           </div>
           <div className="mt-5">
-            <Field label="Description" hint="Use headings, bullets, quotes and links to make the event page feel editorial instead of flat.">
+            <Field
+              label="Description"
+              fieldId="description"
+              error={fieldErrors.description}
+              hint="Use headings, bullets, quotes and links to make the event page feel editorial instead of flat."
+            >
               <RichTextEditor
                 value={form.description}
-                onChange={(description) => setForm({ ...form, description })}
+                className={fieldErrors.description ? "border-[#f0a7b3] ring-4 ring-[#f0ccd2]/40" : undefined}
+                onChange={(description) => {
+                  clearFieldError("description");
+                  setForm({ ...form, description });
+                }}
                 placeholder="Describe the experience, audience, agenda and why guests should care."
               />
             </Field>
           </div>
           <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <Field label="Location">
-              <Input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
+            <Field label="Location" fieldId="location" error={fieldErrors.location}>
+              <Input
+                value={form.location}
+                className={fieldErrors.location ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                aria-invalid={Boolean(fieldErrors.location)}
+                onChange={(event) => {
+                  clearFieldError("location");
+                  setForm({ ...form, location: event.target.value });
+                }}
+              />
             </Field>
             <Field label="Tags" hint="Comma separated">
               <Input value={tagInput} onChange={(event) => setTagInput(event.target.value)} />
@@ -447,49 +610,132 @@ export function EventForm({
           title="Schedule and access"
           description="Set whether this runs once or repeats, and whether guests attend in person, virtually, or in a hybrid format."
         >
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Field label="Event cadence">
-              <ToggleGroup<ScheduleType>
-                value={form.scheduleType}
-                options={[
-                  { label: "Single event", value: "single" },
-                  { label: "Recurring event", value: "recurring" }
-                ]}
-                onChange={(scheduleType) => setForm({ ...form, scheduleType })}
-              />
-            </Field>
-            <Field label="Attendance mode">
-              <ToggleGroup<AttendanceMode>
-                value={form.attendanceMode}
-                options={[
-                  { label: "In person", value: "in_person" },
-                  { label: "Virtual", value: "virtual" },
-                  { label: "Hybrid", value: "hybrid" }
-                ]}
-                onChange={(attendanceMode) => setForm({ ...form, attendanceMode })}
-              />
-            </Field>
+          <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
+            <div className="rounded-[18px] border border-line bg-surface-subtle p-4">
+              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink">
+                <Clock3 className="h-4 w-4 text-accent" />
+                Event cadence
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  {
+                    label: "Single event",
+                    value: "single" as ScheduleType,
+                    description: "One date and time",
+                    icon: CalendarDays
+                  },
+                  {
+                    label: "Recurring",
+                    value: "recurring" as ScheduleType,
+                    description: "Repeats over time",
+                    icon: Repeat
+                  }
+                ].map((option) => {
+                  const active = form.scheduleType === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={cn(
+                        "rounded-[16px] border bg-white p-4 text-left shadow-soft transition",
+                        active ? "border-accent ring-4 ring-accent/10" : "border-line hover:border-accent/35"
+                      )}
+                      onClick={() => setForm({ ...form, scheduleType: option.value })}
+                    >
+                      <span
+                        className={cn(
+                          "inline-flex h-10 w-10 items-center justify-center rounded-full",
+                          active ? "bg-accent text-white" : "bg-accent/10 text-accent"
+                        )}
+                      >
+                        <option.icon className="h-4 w-4" />
+                      </span>
+                      <span className="mt-4 block text-sm font-semibold text-ink">{option.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-muted">{option.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-line bg-surface-subtle p-4">
+              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-ink">
+                <ShieldCheck className="h-4 w-4 text-accent" />
+                Access mode
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: "In person", value: "in_person" as AttendanceMode, icon: MapPin },
+                  { label: "Virtual", value: "virtual" as AttendanceMode, icon: MonitorPlay },
+                  { label: "Hybrid", value: "hybrid" as AttendanceMode, icon: Globe2 }
+                ].map((option) => {
+                  const active = form.attendanceMode === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={cn(
+                        "rounded-[16px] border bg-white p-4 text-left shadow-soft transition",
+                        active ? "border-accent ring-4 ring-accent/10" : "border-line hover:border-accent/35"
+                      )}
+                      onClick={() => setForm({ ...form, attendanceMode: option.value })}
+                    >
+                      <span
+                        className={cn(
+                          "inline-flex h-10 w-10 items-center justify-center rounded-full",
+                          active ? "bg-accent text-white" : "bg-accent/10 text-accent"
+                        )}
+                      >
+                        <option.icon className="h-4 w-4" />
+                      </span>
+                      <span className="mt-4 block text-sm font-semibold text-ink">{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <Field label="Start date and time">
-              <Input
-                type="datetime-local"
+          <div className="mt-5 grid gap-5 rounded-[18px] border border-line bg-white p-5 shadow-soft md:grid-cols-2">
+            <div data-error-anchor="startDate">
+              <DateTimePicker
+                label="Start date and time"
                 value={form.startDate}
-                onChange={(event) => setForm({ ...form, startDate: event.target.value })}
+                min={minimumDateTime}
+                error={startDateError}
+                hint="Pick when guests can start attending."
+                onChange={(startDate) => {
+                  clearFieldError("startDate");
+                  clearFieldError("endDate");
+                  const nextStart = startDate;
+                  const currentEnd = form.endDate ? new Date(form.endDate) : null;
+                  const start = nextStart ? new Date(nextStart) : null;
+                  const shouldMoveEnd = start && currentEnd && currentEnd <= start;
+                  const nextEnd = shouldMoveEnd
+                    ? toDateTimeInputValue(new Date(start.getTime() + 60 * 60 * 1000))
+                    : form.endDate;
+
+                  setForm({ ...form, startDate: nextStart, endDate: nextEnd });
+                }}
               />
-            </Field>
-            <Field label="End date and time">
-              <Input
-                type="datetime-local"
+            </div>
+            <div data-error-anchor="endDate">
+              <DateTimePicker
+                label="End date and time"
                 value={form.endDate}
-                onChange={(event) => setForm({ ...form, endDate: event.target.value })}
+                min={form.startDate || minimumDateTime}
+                error={endDateError}
+                hint="End time is always kept after the start."
+                onChange={(endDate) => {
+                  clearFieldError("endDate");
+                  setForm({ ...form, endDate });
+                }}
               />
-            </Field>
+            </div>
           </div>
 
           {form.scheduleType === "recurring" && form.recurrence ? (
-            <div className="mt-5 grid gap-5 rounded-[16px] border border-line bg-surface-subtle p-5 md:grid-cols-3">
+            <div className="mt-5 grid gap-5 rounded-[18px] border border-accent/15 bg-accent/5 p-5 md:grid-cols-3">
               <Field label="Frequency">
                 <Select
                   value={form.recurrence.frequency}
@@ -534,7 +780,7 @@ export function EventForm({
           ) : null}
 
           {form.attendanceMode !== "in_person" && form.streaming ? (
-            <div className="mt-5 rounded-[16px] border border-line bg-surface-subtle p-5">
+            <div className="mt-5 rounded-[18px] border border-accent/15 bg-accent/5 p-5">
               <div className="grid gap-5 md:grid-cols-2">
                 <Field label="Streaming platform">
                   <Select
@@ -609,25 +855,40 @@ export function EventForm({
             </div>
           ) : null}
 
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <Field label="Capacity">
+          <div
+            className={cn(
+              "mt-5 grid gap-5 rounded-[18px] border border-line bg-white p-5 shadow-soft",
+              showStatusField ? "md:grid-cols-2" : ""
+            )}
+          >
+            <Field label="Capacity" fieldId="capacity" error={fieldErrors.capacity}>
               <Input
                 type="number"
                 value={form.capacity}
-                onChange={(event) => setForm({ ...form, capacity: Number(event.target.value) })}
+                className={fieldErrors.capacity ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                aria-invalid={Boolean(fieldErrors.capacity)}
+                onChange={(event) => {
+                  clearFieldError("capacity");
+                  setForm({ ...form, capacity: Number(event.target.value) });
+                }}
               />
             </Field>
-            <Field label="Current status">
-              <Select
-                value={form.status}
-                onChange={(event) => setForm({ ...form, status: event.target.value as EventFormValues["status"] })}
-              >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="sold_out">Sold out</option>
-                <option value="cancelled">Cancelled</option>
-              </Select>
-            </Field>
+            {showStatusField ? (
+              <Field label="Current status">
+                <Select
+                  value={form.status}
+                  onChange={(event) => setForm({ ...form, status: event.target.value as EventFormValues["status"] })}
+                >
+                  <option value="published">Published</option>
+                  <option value="sold_out">Sold out</option>
+                  <option value="cancelled">Cancelled</option>
+                </Select>
+              </Field>
+            ) : (
+              <div className="rounded-[16px] border border-line bg-[#faf7fd] px-4 py-4 text-sm text-muted">
+                New events go live immediately after creation once your verified payout profile is active.
+              </div>
+            )}
           </div>
         </Section>
 
@@ -635,7 +896,13 @@ export function EventForm({
           title="Ticket setup"
           description="Create realistic ticket tiers with names, pricing, available quantities, and perks. Guests will pick from these during checkout."
         >
-          <div className="space-y-4">
+          <div className="space-y-4" data-error-anchor="ticketTiers">
+            {fieldErrors.ticketTiers ? (
+              <p className="flex items-start gap-2 rounded-[12px] border border-[#f0ccd2] bg-[#fff6f7] px-3 py-2 text-xs font-medium leading-5 text-[#923647]">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                {fieldErrors.ticketTiers}
+              </p>
+            ) : null}
             {form.ticketTiers.map((tier, index) => (
               <div key={tier.id} className="rounded-[16px] border border-line bg-surface-subtle p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -660,31 +927,70 @@ export function EventForm({
                   ) : null}
                 </div>
                 <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Ticket name">
-                    <Input value={tier.name} onChange={(event) => updateTicketTier(tier.id, { name: event.target.value })} />
+                  <Field
+                    label="Ticket name"
+                    fieldId={`ticket-${tier.id}-name`}
+                    error={fieldErrors[`ticket-${tier.id}-name`]}
+                  >
+                    <Input
+                      value={tier.name}
+                      className={fieldErrors[`ticket-${tier.id}-name`] ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                      aria-invalid={Boolean(fieldErrors[`ticket-${tier.id}-name`])}
+                      onChange={(event) => {
+                        clearFieldError(`ticket-${tier.id}-name`);
+                        updateTicketTier(tier.id, { name: event.target.value });
+                      }}
+                    />
                   </Field>
-                  <Field label="Price">
+                  <Field
+                    label="Price"
+                    fieldId={`ticket-${tier.id}-price`}
+                    error={fieldErrors[`ticket-${tier.id}-price`]}
+                  >
                     <Input
                       type="number"
                       min={0}
                       value={tier.price}
-                      onChange={(event) => updateTicketTier(tier.id, { price: Number(event.target.value) })}
+                      className={fieldErrors[`ticket-${tier.id}-price`] ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                      aria-invalid={Boolean(fieldErrors[`ticket-${tier.id}-price`])}
+                      onChange={(event) => {
+                        clearFieldError(`ticket-${tier.id}-price`);
+                        updateTicketTier(tier.id, { price: Number(event.target.value) });
+                      }}
                     />
                   </Field>
-                  <Field label="Available quantity">
+                  <Field
+                    label="Available quantity"
+                    fieldId={`ticket-${tier.id}-quantity`}
+                    error={fieldErrors[`ticket-${tier.id}-quantity`]}
+                  >
                     <Input
                       type="number"
                       min={1}
                       value={tier.quantity}
-                      onChange={(event) => updateTicketTier(tier.id, { quantity: Number(event.target.value) })}
+                      className={fieldErrors[`ticket-${tier.id}-quantity`] ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                      aria-invalid={Boolean(fieldErrors[`ticket-${tier.id}-quantity`])}
+                      onChange={(event) => {
+                        clearFieldError(`ticket-${tier.id}-quantity`);
+                        updateTicketTier(tier.id, { quantity: Number(event.target.value) });
+                      }}
                     />
                   </Field>
-                  <Field label="Display order">
+                  <Field
+                    label="Display order"
+                    fieldId={`ticket-${tier.id}-order`}
+                    error={fieldErrors[`ticket-${tier.id}-order`]}
+                  >
                     <Input
                       type="number"
                       min={0}
                       value={tier.order}
-                      onChange={(event) => updateTicketTier(tier.id, { order: Number(event.target.value) })}
+                      className={fieldErrors[`ticket-${tier.id}-order`] ? "border-[#f0a7b3] bg-white ring-4 ring-[#f0ccd2]/40" : undefined}
+                      aria-invalid={Boolean(fieldErrors[`ticket-${tier.id}-order`])}
+                      onChange={(event) => {
+                        clearFieldError(`ticket-${tier.id}-order`);
+                        updateTicketTier(tier.id, { order: Number(event.target.value) });
+                      }}
                     />
                   </Field>
                 </div>

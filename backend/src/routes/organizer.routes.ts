@@ -3,13 +3,14 @@ import {
   payoutBanksController,
   resolvePayoutAccountController,
   payoutStatusController,
+  updateOrganizerSettingsController,
   upsertPayoutProfileController
 } from "../controllers/organizer.controller";
 import { requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
 import { validate } from "../middleware/validate";
 import { asyncHandler } from "../utils/async-handler";
-import { payoutAccountResolveSchema, payoutProfileSchema } from "../validators/organizer.validator";
+import { organizerSettingsSchema, payoutAccountResolveSchema, payoutProfileSchema } from "../validators/organizer.validator";
 
 export const organizerRouter = Router();
 
@@ -33,4 +34,11 @@ organizerRouter.post(
   requireRole("organizer", "admin"),
   validate(payoutProfileSchema),
   asyncHandler(upsertPayoutProfileController)
+);
+organizerRouter.patch(
+  "/settings",
+  requireAuth,
+  requireRole("organizer", "admin"),
+  validate(organizerSettingsSchema),
+  asyncHandler(updateOrganizerSettingsController)
 );

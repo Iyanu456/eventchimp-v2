@@ -6,7 +6,9 @@ export const queryKeys = {
     list: (params?: Record<string, string | number | undefined>) => ["events", params] as const,
     featured: ["events", "featured"] as const,
     detail: (slug: string) => ["events", slug] as const,
-    posts: (eventId: string) => ["events", eventId, "posts"] as const
+    posts: (eventId: string) => ["events", eventId, "posts"] as const,
+    collaborators: (eventId: string) => ["events", eventId, "collaborators"] as const,
+    metrics: (eventId: string) => ["events", eventId, "metrics"] as const
   },
   dashboard: {
     organizer: ["dashboard", "organizer"] as const,
@@ -15,6 +17,7 @@ export const queryKeys = {
   organizer: {
     payoutStatus: ["organizer", "payout-status"] as const,
     banks: ["organizer", "banks"] as const,
+    settings: ["organizer", "settings"] as const,
     resolveAccount: (bankCode: string, accountNumber: string) =>
       ["organizer", "resolve-account", bankCode, accountNumber] as const
   },

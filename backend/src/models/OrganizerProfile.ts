@@ -30,6 +30,9 @@ const organizerProfileSchema = new Schema(
     payoutStatus: { type: String, enum: ORGANIZER_PAYOUT_STATUSES, default: "not_started" },
     riskStatus: { type: String, enum: RISK_STATUSES, default: "clear" },
     payoutProfile: { type: payoutProfileSchema, default: () => ({}) },
+    organizerNotifications: {
+      ticketPurchaseEmail: { type: Boolean, default: false }
+    },
     brandingPreferences: {
       accentColor: { type: String, default: "#4F46E5" },
       signatureTone: { type: String, default: "Premium and polished" }

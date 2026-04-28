@@ -16,7 +16,7 @@ import { recordPaymentLedgerEntries } from "./ledger.service";
 import { fulfillOrderTickets } from "./fulfillment.service";
 import { enqueueJob } from "./job-queue.service";
 import { reconcileOrder } from "./reconciliation.service";
-import { sendTicketConfirmationEmail } from "./email.service";
+import { sendOrderConfirmationEmail, sendOrganizerPurchaseEmail } from "./email.service";
 import { serializeOrderToTransactionView } from "./payment-view.service";
 
 type CheckoutAnswerInput = {
@@ -40,6 +40,25 @@ export type CheckoutInput = {
 export type PaymentQuoteInput = Pick<CheckoutInput, "eventId" | "ticketTypeId" | "quantity">;
 
 const buildReference = () => `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+type VerificationOrder = Parameters<typeof serializeOrderToTransactionView>[0];
+
+const buildVerificationSuccessPayload = async (
+  orderId: string,
+  fallbackOrder?: VerificationOrder | null
+) => {
+  const recoveredOrder = ((await OrderModel.findById(orderId)) as VerificationOrder | null) ?? fallbackOrder;
+  if (!recoveredOrder) {
+    throw new AppError("Order not found", 404);
+  }
+
+  const recoveredTickets = await TicketModel.find({ orderId: recoveredOrder._id }).populate("eventId");
+  return {
+    transaction: serializeOrderToTransactionView(recoveredOrder),
+    order: recoveredOrder,
+    tickets: recoveredTickets
+  };
+};
 
 const sanitizeAnswers = (answers: CheckoutAnswerInput[] = []) =>
   answers
@@ -154,11 +173,26 @@ const validateCustomAnswers = (
 };
 
 export const initializeOrderCheckout = async (input: CheckoutInput, user?: Express.User) => {
+  console.log("[payments/checkout] initializeOrderCheckout start", {
+    eventId: input.eventId,
+    ticketTypeId: input.ticketTypeId,
+    quantity: input.quantity,
+    attendeeEmail: input.attendeeEmail
+  });
+
   const { event, selectedTier, organizerProfile } = await loadCheckoutContext(input);
   const pricing = calculatePricingBreakdown(selectedTier.price * input.quantity, "split_subaccount");
   const reference = buildReference();
   const answers = sanitizeAnswers(input.customAnswers);
   validateCustomAnswers(event, answers);
+
+  console.log("[payments/checkout] initializeOrderCheckout context", {
+    eventId: event._id.toString(),
+    selectedTierId: selectedTier.id,
+    selectedTierPrice: selectedTier.price,
+    buyerTotal: pricing.buyerTotal,
+    organizerReady: !!organizerProfile?.payoutProfile.subaccountCode
+  });
 
   const order = await OrderModel.create({
     publicReference: reference,
@@ -187,7 +221,18 @@ export const initializeOrderCheckout = async (input: CheckoutInput, user?: Expre
     }
   });
 
+  console.log("[payments/checkout] initializeOrderCheckout order created", {
+    orderId: order._id.toString(),
+    reference,
+    paymentStatus: order.paymentStatus,
+    pricing: order.pricing
+  });
+
   if (pricing.buyerTotal === 0) {
+    console.log("[payments/checkout] initializeOrderCheckout free ticket branch", {
+      reference,
+      buyerTotal: pricing.buyerTotal
+    });
     return {
       reference,
       checkoutUrl: "",
@@ -201,11 +246,23 @@ export const initializeOrderCheckout = async (input: CheckoutInput, user?: Expre
     };
   }
 
+  console.log("[payments/checkout] initializeOrderCheckout calling Paystack", {
+    reference,
+    amount: pricing.buyerTotal,
+    callbackUrl: `${env.CLIENT_URL}/checkout/success?reference=${reference}&event=${event.slug}`,
+    metadata: {
+      orderId: order._id.toString(),
+      eventId: event._id.toString(),
+      ticketTypeId: selectedTier.id,
+      quantity: input.quantity
+    }
+  });
+
   const payment = await initializePaystackPayment({
     email: input.attendeeEmail.trim(),
     amount: pricing.buyerTotal,
     reference,
-    callbackUrl: `${env.CLIENT_URL}/events/${event.slug}/checkout?reference=${reference}`,
+    callbackUrl: `${env.CLIENT_URL}/checkout/success?reference=${reference}&event=${event.slug}`,
     metadata: {
       orderId: order._id.toString(),
       eventId: event._id.toString(),
@@ -217,6 +274,13 @@ export const initializeOrderCheckout = async (input: CheckoutInput, user?: Expre
     bearer: "account"
   });
 
+  console.log("[payments/checkout] initializeOrderCheckout paystack response", {
+    reference: payment.reference,
+    authorizationUrl: payment.authorizationUrl,
+    mode: payment.mode
+  });
+
+  order.providerReference = payment.reference;
   order.paystack = {
     ...order.paystack,
     accessCode: payment.accessCode,
@@ -225,7 +289,7 @@ export const initializeOrderCheckout = async (input: CheckoutInput, user?: Expre
   await order.save();
 
   return {
-    reference,
+    reference: payment.reference,
     checkoutUrl: payment.authorizationUrl,
     mode: payment.mode,
     pricing,
@@ -244,6 +308,9 @@ const finalizeOrder = async (orderId: string) => {
     throw new AppError("Order not found after fulfillment", 404);
   }
 
+  const event = await EventModel.findById(order.eventId).populate("organizerId", "email name");
+  const organizerProfile = await OrganizerProfileModel.findOne({ userId: order.organizerId });
+
   await enqueueJob(
     "reconciliation",
     "reconcile-order",
@@ -254,30 +321,55 @@ const finalizeOrder = async (orderId: string) => {
     `reconcile:${orderId}`
   );
 
-  if (tickets[0]) {
+  if (tickets.length) {
     await enqueueJob(
       "email-delivery",
-      "ticket-confirmation",
+      "order-confirmation",
       {
         to: order.attendeeEmail,
         name: `${order.attendeeFirstName} ${order.attendeeLastName}`.trim() || "Event guest",
-        eventTitle:
-          typeof tickets[0].eventId === "object" && tickets[0].eventId
-            ? ((tickets[0].eventId as { title?: string }).title ?? "EventChimp event")
-            : "EventChimp event",
+        eventTitle: event?.title ?? "EventChimp event",
         amount: order.pricing.buyerTotal,
-        qrCode: tickets[0].qrCode
+        eventUrl: `${env.CLIENT_URL}/events/${event?.slug ?? ""}`,
+        tickets: tickets.map((ticket) => ({
+          ticketCode: ticket.ticketCode,
+          qrCode: ticket.qrCode,
+          ticketTypeName: ticket.ticketTypeName
+        }))
       },
-      async (payload: {
-        to: string;
-        name: string;
-        eventTitle: string;
-        amount: number;
-        qrCode: string;
-      }) => {
-        await sendTicketConfirmationEmail(payload);
+      async (payload) => {
+        await sendOrderConfirmationEmail(payload as Parameters<typeof sendOrderConfirmationEmail>[0]);
       },
       `email:${order.providerReference}`
+    );
+  }
+
+  const organizerEmail =
+    event?.organizerId && typeof event.organizerId === "object"
+      ? ((event.organizerId as { email?: string }).email ?? "")
+      : "";
+  const organizerName =
+    event?.organizerId && typeof event.organizerId === "object"
+      ? ((event.organizerId as { name?: string }).name ?? "Organizer")
+      : "Organizer";
+
+  if (organizerProfile?.organizerNotifications?.ticketPurchaseEmail && organizerEmail) {
+    await enqueueJob(
+      "email-delivery",
+      "organizer-purchase-notification",
+      {
+        to: organizerEmail,
+        organizerName,
+        attendeeName: `${order.attendeeFirstName} ${order.attendeeLastName}`.trim() || "Event guest",
+        attendeeEmail: order.attendeeEmail,
+        eventTitle: event?.title ?? "EventChimp event",
+        quantity: order.quantity,
+        buyerTotal: order.pricing.buyerTotal
+      },
+      async (payload) => {
+        await sendOrganizerPurchaseEmail(payload as Parameters<typeof sendOrganizerPurchaseEmail>[0]);
+      },
+      `email:organizer:${order.providerReference}`
     );
   }
 
@@ -285,9 +377,14 @@ const finalizeOrder = async (orderId: string) => {
 };
 
 export const verifyOrderPayment = async (reference: string) => {
-  const order = await OrderModel.findOne({
-    $or: [{ providerReference: reference }, { publicReference: reference }]
-  });
+  const normalizedReference = reference.trim();
+  const order =
+    (await OrderModel.findOne({
+      $or: [{ providerReference: normalizedReference }, { publicReference: normalizedReference }]
+    })) ??
+    (await OrderModel.findOne({
+      $or: [{ "paystack.accessCode": normalizedReference }, { "paystack.authorizationUrl": normalizedReference }]
+    }));
   if (!order) {
     throw new AppError("Order not found", 404);
   }
@@ -342,16 +439,22 @@ export const verifyOrderPayment = async (reference: string) => {
     verificationPayload: verification.data
   } as never;
   await order.save();
-  await recordPaymentLedgerEntries(order);
+  try {
+    await recordPaymentLedgerEntries(order);
+    await finalizeOrder(order._id.toString());
+  } catch (error) {
+    const recovered = await buildVerificationSuccessPayload(order._id.toString(), order);
+    if (
+      recovered.order.paymentStatus === "paid" &&
+      (recovered.order.fulfillmentStatus === "fulfilled" || recovered.tickets.length >= recovered.order.quantity)
+    ) {
+      return recovered;
+    }
 
-  const { tickets } = await finalizeOrder(order._id.toString());
-  const freshOrder = await OrderModel.findById(order._id);
+    throw error;
+  }
 
-  return {
-    transaction: serializeOrderToTransactionView(freshOrder ?? order),
-    order: freshOrder ?? order,
-    tickets
-  };
+  return buildVerificationSuccessPayload(order._id.toString(), order);
 };
 
 export const createWebhookLog = async (payload: unknown, rawBody: Buffer, signature?: string) => {

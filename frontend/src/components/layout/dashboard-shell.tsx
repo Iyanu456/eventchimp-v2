@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  MoreHorizontal,
   Palette,
   Search,
   Ticket,
@@ -62,8 +63,10 @@ function ProfileSummary({
   displayEmail: string;
   onLogout: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="rounded-[18px] border border-line bg-[#faf8fd] p-3">
+    <div className="relative rounded-[18px] border border-line bg-[#faf8fd] p-3">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#ffcae4_0%,#e6aaff_100%)] text-xs font-semibold text-ink">
           {displayName
@@ -77,15 +80,27 @@ function ProfileSummary({
           <p className="truncate text-sm font-semibold text-ink">{displayName}</p>
           <p className="truncate text-xs text-muted">{displayEmail}</p>
         </div>
+        <button
+          type="button"
+          className="ml-auto inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#7f778d] shadow-soft transition hover:text-accent"
+          onClick={() => setMenuOpen((value) => !value)}
+          aria-label="Open account actions"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
       </div>
-      <button
-        type="button"
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] bg-white px-3 py-2.5 text-sm font-semibold text-[#6e6a76] shadow-soft transition hover:bg-[#f3eff8] hover:text-ink"
-        onClick={onLogout}
-      >
-        <LogOut className="h-4 w-4 text-accent" />
-        Log out
-      </button>
+      {menuOpen ? (
+        <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[16px] border border-line bg-white p-2 shadow-[0_18px_42px_rgba(39,20,63,0.16)]">
+          <button
+            type="button"
+            className="flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-sm font-semibold text-[#6e6a76] transition hover:bg-[#f3eff8] hover:text-ink"
+            onClick={onLogout}
+          >
+            <LogOut className="h-4 w-4 text-accent" />
+            Log out
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

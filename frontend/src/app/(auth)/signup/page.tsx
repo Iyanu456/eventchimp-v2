@@ -25,9 +25,10 @@ function AuthField({
   );
 }
 
-export default function SignupPage() {
+export default function SignupPage({ searchParams }: { searchParams?: { next?: string } }) {
   const router = useRouter();
   const { register, googleInitiate } = useAppMutations();
+  const nextPath = searchParams?.next;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +56,7 @@ export default function SignupPage() {
       footer={
         <p className="text-sm text-[#251d30]">
           Already have an account?{" "}
-          <Link href="/login" className="font-semibold text-[#4b2a76]">
+          <Link href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : "/login"} className="font-semibold text-[#4b2a76]">
             Sign in
           </Link>
         </p>
@@ -86,7 +87,7 @@ export default function SignupPage() {
             password,
             role: "organizer"
           });
-          router.push(response.data.user.role === "admin" ? "/admin" : "/dashboard");
+          router.push(nextPath || (response.data.user.role === "admin" ? "/admin" : "/dashboard"));
         }}
       >
         <AuthField icon={<Mail className="h-4 w-4" />}>

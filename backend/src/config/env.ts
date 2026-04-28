@@ -43,6 +43,7 @@ const envSchema = z.object({
   PLATFORM_MARGIN_TYPE: z.enum(["flat", "percent"]).default("flat"),
   PLATFORM_MARGIN_VALUE: z.coerce.number().default(400),
   RESEND_API_KEY: z.string().optional().default(""),
+  EMAIL_FROM: senderEmailSchema.optional().default(""),
   RESEND_FROM_EMAIL: senderEmailSchema,
   CLOUDINARY_CLOUD_NAME: z.string().optional().default(""),
   CLOUDINARY_API_KEY: z.string().optional().default(""),
@@ -57,4 +58,9 @@ const envSchema = z.object({
     .transform((value) => value === "true")
 });
 
-export const env = envSchema.parse(process.env);
+const parsedEnv = envSchema.parse(process.env);
+
+export const env = {
+  ...parsedEnv,
+  RESEND_FROM_EMAIL: parsedEnv.EMAIL_FROM || parsedEnv.RESEND_FROM_EMAIL
+};

@@ -1,6 +1,9 @@
 import { ClientSession } from "mongoose";
 import { LedgerEntryModel } from "../models/LedgerEntry";
 
+const isDuplicateKeyError = (error: unknown) =>
+  Boolean(error && typeof error === "object" && "code" in error && (error as { code?: number }).code === 11000);
+
 export const recordPaymentLedgerEntries = async (
   order: {
     _id: { toString: () => string };
@@ -42,34 +45,46 @@ export const recordPaymentLedgerEntries = async (
     }
   };
 
-  await LedgerEntryModel.updateOne(
-    { orderId: order._id, entryType: "payment_received" },
-    {
-      $setOnInsert: {
-        ...basePayload,
-        entryType: "payment_received",
-        settlementStatus: order.settlementStatus,
-        note: "Buyer payment verified"
-      }
-    },
-    { upsert: true, session }
-  );
+  try {
+    await LedgerEntryModel.updateOne(
+      { orderId: order._id, entryType: "payment_received" },
+      {
+        $setOnInsert: {
+          ...basePayload,
+          entryType: "payment_received",
+          settlementStatus: order.settlementStatus,
+          note: "Buyer payment verified"
+        }
+      },
+      { upsert: true, session }
+    );
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) {
+      throw error;
+    }
+  }
 
-  await LedgerEntryModel.updateOne(
-    { orderId: order._id, entryType: "platform_fee_accrued" },
-    {
-      $setOnInsert: {
-        ...basePayload,
-        entryType: "platform_fee_accrued",
-        grossAmount: order.pricing.serviceFee,
-        ticketSubtotal: 0,
-        organizerNet: 0,
-        settlementStatus: order.settlementStatus,
-        note: "Platform service fee accrued"
-      }
-    },
-    { upsert: true, session }
-  );
+  try {
+    await LedgerEntryModel.updateOne(
+      { orderId: order._id, entryType: "platform_fee_accrued" },
+      {
+        $setOnInsert: {
+          ...basePayload,
+          entryType: "platform_fee_accrued",
+          grossAmount: order.pricing.serviceFee,
+          ticketSubtotal: 0,
+          organizerNet: 0,
+          settlementStatus: order.settlementStatus,
+          note: "Platform service fee accrued"
+        }
+      },
+      { upsert: true, session }
+    );
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) {
+      throw error;
+    }
+  }
 };
 
 export const recordRefundLedgerEntry = async (

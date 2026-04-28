@@ -20,8 +20,10 @@ import {
   CheckoutAnswer,
   Event,
   EventCustomField,
+  EventCollaboratorResponse,
   EventDetailResponse,
   EventGuest,
+  EventMetrics,
   EventMessage,
   EventRecurrence,
   EventsResponse,
@@ -158,6 +160,47 @@ export const request = {
   createEventPost: async (eventId: string, payload: { guestName?: string; content: string }) =>
     crudRequest.post<ApiEnvelope<EventMessage>, typeof payload>(EVENT_ENDPOINTS.posts(eventId), payload),
 
+  getEventCollaborators: async (eventId: string) =>
+    crudRequest.get<ApiEnvelope<EventCollaboratorResponse>>(EVENT_ENDPOINTS.collaborators(eventId)),
+
+  inviteEventCollaborator: async (
+    eventId: string,
+    payload: { email: string; role: "manager" | "scanner" | "viewer" }
+  ) => crudRequest.post<ApiEnvelope<EventCollaboratorResponse["invitations"][number]>, typeof payload>(EVENT_ENDPOINTS.inviteCollaborator(eventId), payload),
+
+  acceptEventInvitation: async (token: string) =>
+    crudRequest.post<ApiEnvelope<{ eventId: string; eventTitle: string; role: string }>, undefined>(
+      EVENT_ENDPOINTS.acceptInvitation(token)
+    ),
+
+  getEventMetrics: async (eventId: string) =>
+    crudRequest.get<ApiEnvelope<EventMetrics>>(EVENT_ENDPOINTS.metrics(eventId)),
+
+  updateEventSettings: async (
+    eventId: string,
+    payload: { accessStatus?: "active" | "suspended"; suspensionReason?: string }
+  ) => crudRequest.patch<ApiEnvelope<Event>, typeof payload>(EVENT_ENDPOINTS.settings(eventId), payload),
+
+  scanEventTicket: async (eventId: string, payload: { qrToken: string }) =>
+    crudRequest.post<
+      ApiEnvelope<{
+        status: "valid" | "used" | "invalid";
+        ticket: {
+          id: string;
+          ticketCode: string;
+          ticketTypeName: string;
+          attendeeName: string;
+          attendeeEmail: string;
+          checkedInAt?: string | null;
+          orderReference: string;
+        } | null;
+      }>,
+      typeof payload
+    >(EVENT_ENDPOINTS.scanTicket(eventId), payload),
+
+  checkInEventTicket: async (eventId: string, payload: { qrToken: string }) =>
+    crudRequest.post<ApiEnvelope<Ticket>, typeof payload>(EVENT_ENDPOINTS.checkInByToken(eventId), payload),
+
   getPaymentQuote: async (payload: PaymentQuotePayload) =>
     crudRequest.post<
       ApiEnvelope<PricingBreakdown>,
@@ -210,6 +253,12 @@ export const request = {
     accountNumber: string;
   }) =>
     crudRequest.post<ApiEnvelope<PayoutStatus>, typeof payload>(ORGANIZER_ENDPOINTS.payoutProfile, payload),
+
+  updateOrganizerSettings: async (payload: {
+    organizerNotifications: {
+      ticketPurchaseEmail: boolean;
+    };
+  }) => crudRequest.patch<ApiEnvelope<PayoutStatus>, typeof payload>(ORGANIZER_ENDPOINTS.settings, payload),
 
   createRefund: async (payload: {
     orderReference: string;

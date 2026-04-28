@@ -12,6 +12,12 @@ type UpsertPayoutProfileInput = {
   accountNumber: string;
 };
 
+type UpdateOrganizerSettingsInput = {
+  organizerNotifications?: {
+    ticketPurchaseEmail?: boolean;
+  };
+};
+
 const maskAccountNumber = (accountNumber: string) =>
   accountNumber.length < 4 ? accountNumber : `${"*".repeat(accountNumber.length - 4)}${accountNumber.slice(-4)}`;
 
@@ -49,7 +55,10 @@ export const getOrganizerPayoutStatus = async (userId: string) => {
     currency: organizerProfile.payoutProfile.currency,
     subaccountCode: organizerProfile.payoutProfile.subaccountCode,
     settlementSchedule: organizerProfile.payoutProfile.settlementSchedule,
-    reviewNote: organizerProfile.payoutProfile.reviewNote
+    reviewNote: organizerProfile.payoutProfile.reviewNote,
+    organizerNotifications: {
+      ticketPurchaseEmail: Boolean(organizerProfile.organizerNotifications?.ticketPurchaseEmail)
+    }
   };
 };
 
@@ -128,5 +137,20 @@ export const reviewOrganizerPayout = async (
   await organizerProfile.save();
   await syncEventPayoutReady(userId, organizerProfile.payoutReady);
 
+  return getOrganizerPayoutStatus(userId);
+};
+
+export const updateOrganizerSettings = async (userId: string, input: UpdateOrganizerSettingsInput) => {
+  const organizerProfile = await OrganizerProfileModel.findOne({ userId });
+  if (!organizerProfile) {
+    throw new AppError("Organizer profile not found", 404);
+  }
+
+  organizerProfile.organizerNotifications = {
+    ...organizerProfile.organizerNotifications,
+    ...(input.organizerNotifications ?? {})
+  } as never;
+
+  await organizerProfile.save();
   return getOrganizerPayoutStatus(userId);
 };

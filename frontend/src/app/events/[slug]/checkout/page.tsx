@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, ChevronLeft, LoaderCircle, LockKeyhole, Ticket } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "@/apiServices/requests";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +20,10 @@ import { formatCurrency, getRequestErrorMessage } from "@/lib/utils";
 
 export default function EventCheckoutPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const currentUser = useSessionStore((state) => state.currentUser);
   const { data, isLoading } = useEventQuery(params.slug);
   const { initializeCheckout, verifyCheckout } = useAppMutations();
-  const paymentReference = searchParams.get("reference");
+  const [paymentReference, setPaymentReference] = useState("");
 
   const defaultNames = useMemo(() => {
     const parts = (currentUser?.name ?? "").trim().split(" ").filter(Boolean);
@@ -51,6 +50,10 @@ export default function EventCheckoutPage({ params }: { params: { slug: string }
   }, [currentUser?.email, defaultNames.firstName, defaultNames.lastName]);
 
   useEffect(() => {
+    setPaymentReference(new URLSearchParams(window.location.search).get("reference") ?? "");
+  }, []);
+
+  useEffect(() => {
     if (!paymentReference || verifyCheckout.isPending || verifyCheckout.isSuccess) {
       return;
     }
@@ -58,12 +61,12 @@ export default function EventCheckoutPage({ params }: { params: { slug: string }
     verifyCheckout
       .mutateAsync({ reference: paymentReference })
       .then(() => {
-        router.replace(currentUser ? "/dashboard/tickets" : `/events/${params.slug}`);
+        router.replace(`/checkout/success?reference=${encodeURIComponent(paymentReference)}&event=${encodeURIComponent(params.slug)}`);
       })
       .catch((error) => {
         setCheckoutError(getRequestErrorMessage(error, "We couldn't confirm that payment yet. Please try again."));
       });
-  }, [currentUser, params.slug, paymentReference, router, verifyCheckout]);
+  }, [params.slug, paymentReference, router, verifyCheckout]);
 
   const event = data?.event;
   const ticketTiers = useMemo(
@@ -88,6 +91,7 @@ export default function EventCheckoutPage({ params }: { params: { slug: string }
       ).data,
     enabled: Boolean(event?._id && selectedTier?.id)
   });
+  const isFreeCheckout = (pricing?.buyerTotal ?? selectedTier?.price ?? 0) === 0;
 
   if (isLoading || !event) {
     return <div className="page-shell py-24 text-sm text-muted">Loading checkout...</div>;
@@ -155,7 +159,7 @@ export default function EventCheckoutPage({ params }: { params: { slug: string }
                 }
 
                 await verifyCheckout.mutateAsync({ reference: initialized.data.reference });
-                router.push(currentUser ? "/dashboard/tickets" : `/events/${event.slug}`);
+                router.push(`/checkout/success?reference=${encodeURIComponent(initialized.data.reference)}&event=${encodeURIComponent(event.slug)}`);
               } catch (error) {
                 setCheckoutError(getRequestErrorMessage(error, "We couldn't start this checkout yet."));
               }
@@ -264,11 +268,16 @@ export default function EventCheckoutPage({ params }: { params: { slug: string }
             <Button type="submit" variant="pill" size="lg" disabled={initializeCheckout.isPending || verifyCheckout.isPending}>
               {initializeCheckout.isPending || verifyCheckout.isPending ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : isFreeCheckout ? (
+                <Ticket className="h-4 w-4" />
               ) : (
                 <LockKeyhole className="h-4 w-4" />
               )}
-              Pay now
+              {isFreeCheckout ? "Get free ticket" : "Pay now"}
             </Button>
+            {isFreeCheckout ? (
+              <p className="mt-3 text-sm text-muted">This ticket is free. No payment is required to complete checkout.</p>
+            ) : null}
           </form>
         </section>
 

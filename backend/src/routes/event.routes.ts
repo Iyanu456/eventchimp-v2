@@ -1,13 +1,22 @@
 import { Router } from "express";
 import {
-  createEventController,
-  createEventMessageController,
-  deleteEventController,
-  getEventBySlugController,
-  getEventMessagesController,
-  getEventsController,
-  getFeaturedEventsController,
-  updateEventController
+  acceptEventInvitationController,
+  checkInEventTicketController,
+  getEventMetricsController,
+  inviteEventCollaboratorController,
+  listEventCollaboratorsController,
+  scanEventTicketController,
+  updateEventSettingsController
+} from "../controllers/event-operations.controller";
+import {
+  createEventController as createEventPrimaryController,
+  createEventMessageController as createEventMessagePrimaryController,
+  deleteEventController as deleteEventPrimaryController,
+  getEventBySlugController as getEventBySlugPrimaryController,
+  getEventMessagesController as getEventMessagesPrimaryController,
+  getEventsController as getEventsPrimaryController,
+  getFeaturedEventsController as getFeaturedEventsPrimaryController,
+  updateEventController as updateEventPrimaryController
 } from "../controllers/event.controller";
 import { requireAuth } from "../middleware/auth";
 import { requireRole } from "../middleware/roles";
@@ -15,6 +24,7 @@ import { upload } from "../middleware/upload";
 import { validate } from "../middleware/validate";
 import { asyncHandler } from "../utils/async-handler";
 import { eventMessageSchema, eventSchema, eventUpdateSchema } from "../validators/event.validator";
+import { eventSettingsSchema, inviteCollaboratorSchema, scanTicketSchema } from "../validators/event-operations.validator";
 
 export const eventRouter = Router();
 
@@ -45,16 +55,16 @@ export const eventRouter = Router();
  *     tags: [Events]
  *     summary: Create a new event wall post
  */
-eventRouter.get("/", asyncHandler(getEventsController));
-eventRouter.get("/featured", asyncHandler(getFeaturedEventsController));
-eventRouter.get("/slug/:slug", asyncHandler(getEventBySlugController));
+eventRouter.get("/", asyncHandler(getEventsPrimaryController));
+eventRouter.get("/featured", asyncHandler(getFeaturedEventsPrimaryController));
+eventRouter.get("/slug/:slug", asyncHandler(getEventBySlugPrimaryController));
 eventRouter.post(
   "/",
   requireAuth,
   requireRole("organizer", "admin"),
   upload.single("coverImage"),
   validate(eventSchema),
-  asyncHandler(createEventController)
+  asyncHandler(createEventPrimaryController)
 );
 eventRouter.patch(
   "/:id",
@@ -62,13 +72,40 @@ eventRouter.patch(
   requireRole("organizer", "admin"),
   upload.single("coverImage"),
   validate(eventUpdateSchema),
-  asyncHandler(updateEventController)
+  asyncHandler(updateEventPrimaryController)
 );
 eventRouter.delete(
   "/:id",
   requireAuth,
   requireRole("organizer", "admin"),
-  asyncHandler(deleteEventController)
+  asyncHandler(deleteEventPrimaryController)
 );
-eventRouter.get("/:id/messages", asyncHandler(getEventMessagesController));
-eventRouter.post("/:id/messages", validate(eventMessageSchema), asyncHandler(createEventMessageController));
+eventRouter.get("/:id/messages", asyncHandler(getEventMessagesPrimaryController));
+eventRouter.post("/:id/messages", validate(eventMessageSchema), asyncHandler(createEventMessagePrimaryController));
+eventRouter.get("/:eventId/collaborators", requireAuth, asyncHandler(listEventCollaboratorsController));
+eventRouter.post(
+  "/:eventId/collaborators/invite",
+  requireAuth,
+  validate(inviteCollaboratorSchema),
+  asyncHandler(inviteEventCollaboratorController)
+);
+eventRouter.post("/invitations/:token/accept", requireAuth, asyncHandler(acceptEventInvitationController));
+eventRouter.get("/:eventId/metrics", requireAuth, asyncHandler(getEventMetricsController));
+eventRouter.patch(
+  "/:eventId/settings",
+  requireAuth,
+  validate(eventSettingsSchema),
+  asyncHandler(updateEventSettingsController)
+);
+eventRouter.post(
+  "/:eventId/tickets/scan",
+  requireAuth,
+  validate(scanTicketSchema),
+  asyncHandler(scanEventTicketController)
+);
+eventRouter.post(
+  "/:eventId/tickets/check-in",
+  requireAuth,
+  validate(scanTicketSchema),
+  asyncHandler(checkInEventTicketController)
+);

@@ -1,225 +1,104 @@
-"use client";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { EventDetailClient } from "@/components/events/event-detail-client";
+import { fetchEventBySlugServer, getEventPreviewImage, getSiteUrl, stripHtml, toAbsoluteUrl } from "@/lib/server-events";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CalendarDays, MapPin, Radio, Ticket, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { useEventQuery } from "@/hooks/queries/use-events-query";
-import { useAppMutations } from "@/hooks/mutations/use-app-mutations";
-import { formatCurrency, formatEventDate } from "@/lib/utils";
+type EventDetailPageProps = {
+  params: {
+    slug: string;
+  };
+};
 
-export default function EventDetailPage({ params }: { params: { slug: string } }) {
-  const { data, isLoading } = useEventQuery(params.slug);
-  const { createEventPost } = useAppMutations();
-  const [guestName, setGuestName] = useState("");
-  const [message, setMessage] = useState("");
+export async function generateMetadata({ params }: EventDetailPageProps): Promise<Metadata> {
+  const payload = await fetchEventBySlugServer(params.slug);
+  const event = payload?.event;
+  const title = event ? `${event.title} | EventChimp` : "EventChimp event";
+  const description = event ? stripHtml(event.description).slice(0, 160) : "Discover premium event experiences on EventChimp.";
+  const url = `${getSiteUrl()}/events/${params.slug}`;
+  const image = getEventPreviewImage(event?.coverImage);
 
-  const primaryTicket = useMemo(() => {
-    const tiers = [...(data?.event.ticketTiers ?? [])].sort((a, b) => a.order - b.order);
-    return tiers[0];
-  }, [data?.event.ticketTiers]);
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: event?.title ?? "EventChimp event preview"
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image]
+    }
+  };
+}
 
-  if (isLoading || !data) {
-    return <div className="page-shell py-24 text-sm text-muted">Loading event...</div>;
+export default async function EventDetailPage({ params }: EventDetailPageProps) {
+  const payload = await fetchEventBySlugServer(params.slug);
+  if (!payload) {
+    notFound();
   }
 
-  const { event, messages } = data;
-  const descriptionMarkup = /<\/?[a-z][\s\S]*>/i.test(event.description)
-    ? event.description
-    : event.description
-        .split(/\n{2,}/)
-        .map((paragraph) => `<p>${paragraph}</p>`)
-        .join("");
+  const { event } = payload;
+  const canonicalUrl = `${getSiteUrl()}/events/${params.slug}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    description: stripHtml(event.description),
+    image: [getEventPreviewImage(event.coverImage)],
+    url: canonicalUrl,
+    startDate: event.startDate,
+    endDate: event.endDate,
+    eventAttendanceMode:
+      event.attendanceMode === "virtual"
+        ? "https://schema.org/OnlineEventAttendanceMode"
+        : event.attendanceMode === "hybrid"
+          ? "https://schema.org/MixedEventAttendanceMode"
+          : "https://schema.org/OfflineEventAttendanceMode",
+    location:
+      event.attendanceMode === "virtual"
+        ? {
+            "@type": "VirtualLocation",
+            url: event.streaming?.url || canonicalUrl
+          }
+        : {
+            "@type": "Place",
+            name: event.location,
+            address: event.location
+          },
+    organizer: {
+      "@type": "Organization",
+      name: event.organizerId?.name ?? "EventChimp organizer",
+      url: toAbsoluteUrl("/")
+    },
+    offers: event.ticketTiers.map((tier) => ({
+      "@type": "Offer",
+      price: tier.price,
+      priceCurrency: "NGN",
+      availability: "https://schema.org/InStock",
+      url: `${canonicalUrl}/checkout`,
+      category: tier.name
+    }))
+  };
 
   return (
-    <div className="page-shell py-10">
-      <section className="dashboard-wave-card rounded-[24px] px-5 py-6 text-white sm:px-7 sm:py-7 lg:px-9">
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-          <div className="rounded-[18px] shadow-soft">
-            <div className="aspect-[0.86] rounded-[14px] bg-cover bg-center" style={{ backgroundImage: `url(${event.coverImage})` }} />
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-10">
-        <div className="md:flex justify-between">
-          <div>
-            <h1 className="font-display text-[2.1rem] font-semibold uppercase tracking-[-0.04em] leading-[1.3em] md:leading-[1.2em] sm:text-[2.55rem] md:max-w-[70%]">
-              {event.title}
-            </h1>
-            <div className="flex max-md:flex-col gap-3 max-md:mt-3.5 mt-2.5">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <span>{formatEventDate(event.startDate)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                <span>{event.location}</span>
-              </div>
-              {event.attendanceMode !== "in_person" && event.streaming ? (
-                <div className="flex items-center gap-2">
-                  <Radio className="h-4 w-4" />
-                  <span>{event.streaming.provider}</span>
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <div className="space-y-3 max-md:mt-[2em]">
-            <Link href={`/events/${event.slug}/checkout`}>
-              <Button variant="pill" size="lg" className="px-[4em] max-md:w-full flex gap-4">
-                Get Ticket
-                <span className="max-md:block hidden">-</span>
-                <span className="max-md:block hidden">
-                  {event.isFree ? "FREE" : formatCurrency(primaryTicket?.price ?? event.ticketPrice)}
-                </span>
-              </Button>
-            </Link>
-            <p className="max-md:hidden block text-center font-medium text-[2em]">
-              {event.isFree ? "FREE" : formatCurrency(primaryTicket?.price ?? event.ticketPrice)}
-            </p>
-          </div>
-        </div>
-
-        <hr className="my-[2em]" />
-        <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">About this event</h2>
-        <div className="event-description mt-4 max-w-4xl text-sm leading-8 text-[#585365] sm:text-base" dangerouslySetInnerHTML={{ __html: descriptionMarkup }} />
-      </section>
-
-      <section className="mt-10">
-        <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">Gallery</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div
-              key={index}
-              className="aspect-[1.6] rounded-[14px] border border-line bg-cover bg-center shadow-soft"
-              style={{ backgroundImage: `url(${event.coverImage})` }}
-            />
-          ))}
-        </div>
-      </section>
-
-      {event.ticketTiers.length ? (
-        <section className="mt-10">
-          <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">Ticket options</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {event.ticketTiers
-              .slice()
-              .sort((a, b) => a.order - b.order)
-              .map((tier) => (
-                <div key={tier.id} className="surface-panel p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-lg font-semibold text-ink">{tier.name}</p>
-                      <p className="mt-1 text-sm text-muted">{tier.quantity} spots available</p>
-                    </div>
-                    <Badge tone="default">{tier.price === 0 ? "Free" : formatCurrency(tier.price)}</Badge>
-                  </div>
-                  {tier.perks.length ? (
-                    <ul className="mt-4 space-y-2 text-sm text-muted">
-                      {tier.perks.map((perk) => (
-                        <li key={perk} className="flex items-start gap-2">
-                          <span className="mt-2 h-1.5 w-1.5 rounded-full bg-accent" />
-                          <span>{perk}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              ))}
-          </div>
-        </section>
-      ) : null}
-
-      {event.guests.length ? (
-        <section className="mt-10">
-          <h2 className="text-[1.7rem] font-semibold tracking-[-0.03em] text-ink">Featured guests</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {event.guests.map((guest) => (
-              <div key={guest.id} className="surface-panel p-5">
-                <div className="flex items-center gap-4">
-                  <div
-                    className="h-16 w-16 rounded-[16px] bg-[#efeaf7] bg-cover bg-center"
-                    style={{ backgroundImage: guest.imageUrl ? `url(${guest.imageUrl})` : undefined }}
-                  />
-                  <div>
-                    <p className="text-lg font-semibold text-ink">{guest.name}</p>
-                    <p className="text-sm text-muted">{guest.role}</p>
-                  </div>
-                </div>
-                {guest.bio ? <p className="mt-4 text-sm leading-7 text-muted">{guest.bio}</p> : null}
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <section className="mt-8 flex flex-col gap-4 border-t border-[#ded9e8] pt-5 text-sm text-[#5f5a69] sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            {["A", "J", "D"].map((initial, index) => (
-              <span
-                key={initial}
-                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[11px] font-semibold text-white"
-                style={{ backgroundColor: ["#8828D2", "#B5C63B", "#F04B4B"][index] }}
-              >
-                {initial}
-              </span>
-            ))}
-          </div>
-          <span>{event.attendeesCount}+ others going</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-white">I</span>
-          <span>Organized by {event.organizerId?.name ?? "Janet Events"}</span>
-        </div>
-      </section>
-
-      <section className="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="surface-panel p-6">
-          <h3 className="font-display text-[1.6rem] font-semibold tracking-[-0.04em] text-ink">Guest wall</h3>
-          <p className="mt-2 text-sm text-muted">Share a short note before the event or while the room is still buzzing.</p>
-          <form
-            className="mt-5 space-y-4"
-            onSubmit={async (submitEvent) => {
-              submitEvent.preventDefault();
-              await createEventPost.mutateAsync({
-                eventId: event._id,
-                payload: {
-                  guestName,
-                  content: message
-                }
-              });
-              setGuestName("");
-              setMessage("");
-            }}
-          >
-            <Input placeholder="Your name" value={guestName} onChange={(event) => setGuestName(event.target.value)} />
-            <Textarea placeholder="Share a short celebratory note" value={message} onChange={(event) => setMessage(event.target.value)} />
-            <Button variant="pill" type="submit">
-              Post message
-            </Button>
-          </form>
-        </div>
-        <div className="space-y-3">
-          {messages.length ? (
-            messages.map((item) => (
-              <div key={item._id} className="surface-panel p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-ink">{item.userId?.name || item.guestName || "Guest"}</p>
-                  <Badge tone="default">Message</Badge>
-                </div>
-                <p className="mt-2 text-sm leading-7 text-muted">{item.content}</p>
-              </div>
-            ))
-          ) : (
-            <EmptyState title="No wall posts yet" description="Be the first guest to leave a note for this event." />
-          )}
-        </div>
-      </section>
-    </div>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <EventDetailClient data={payload} canonicalUrl={canonicalUrl} />
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { InferSchemaType, Schema, model } from "mongoose";
-import { PAYMENT_STATUSES } from "../constants/enums";
+import { PAYMENT_STATUSES, TICKET_STATUSES } from "../constants/enums";
 
 const customAnswerSchema = new Schema(
   {
@@ -18,6 +18,9 @@ const ticketSchema = new Schema(
     purchaserId: { type: Schema.Types.ObjectId, ref: "User", default: null },
     paymentReference: { type: String, required: true },
     paymentStatus: { type: String, enum: PAYMENT_STATUSES, default: "pending" },
+    status: { type: String, enum: TICKET_STATUSES, default: "issued" },
+    ticketCode: { type: String, required: true },
+    qrTokenHash: { type: String, required: true },
     qrCode: { type: String, required: true },
     totalPaid: { type: Number, required: true },
     ticketPrice: { type: Number, required: true },
@@ -32,13 +35,16 @@ const ticketSchema = new Schema(
     customAnswers: { type: [customAnswerSchema], default: [] },
     comment: { type: String, default: "" },
     checkedIn: { type: Boolean, default: false },
-    checkedInAt: { type: Date, default: null }
+    checkedInAt: { type: Date, default: null },
+    checkedInBy: { type: Schema.Types.ObjectId, ref: "User", default: null }
   },
   { timestamps: true }
 );
 
 ticketSchema.index({ orderId: 1, ticketSequence: 1 }, { unique: true, sparse: true });
 ticketSchema.index({ paymentReference: 1 }, { unique: true });
+ticketSchema.index({ ticketCode: 1 }, { unique: true });
+ticketSchema.index({ qrTokenHash: 1 }, { unique: true });
 
 export type TicketDocument = InferSchemaType<typeof ticketSchema> & { _id: string };
 

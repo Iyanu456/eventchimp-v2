@@ -59,7 +59,7 @@ export function PayoutProfileForm() {
         <div>
           <p className="text-[1.35rem] font-semibold tracking-[-0.03em] text-ink">Payout profile</p>
           <p className="mt-2 text-sm leading-7 text-muted">
-            Paid events are only enabled after this bank profile is verified and connected to a Paystack subaccount.
+            Event creation is only enabled after this bank profile is verified and connected to a Paystack subaccount.
           </p>
         </div>
         {payoutStatus?.payoutReady ? (

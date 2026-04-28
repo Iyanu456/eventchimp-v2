@@ -73,7 +73,20 @@ export const verifyWebhookSignature = (rawBody: Buffer | string, signature?: str
 };
 
 export const initializePaystackPayment = async (payload: InitializePaystackPayload) => {
+  console.log("[paystack] initializePaystackPayment start", {
+    reference: payload.reference,
+    email: payload.email,
+    amount: payload.amount,
+    callbackUrl: payload.callbackUrl ?? env.PAYSTACK_CALLBACK_URL,
+    subaccountCode: payload.subaccountCode,
+    transactionCharge: payload.transactionCharge,
+    bearer: payload.bearer
+  });
+
   if (!isLiveMode()) {
+    console.log("[paystack] initializePaystackPayment mock mode returning mock response", {
+      reference: payload.reference
+    });
     return {
       authorizationUrl: "",
       accessCode: "",
@@ -82,23 +95,73 @@ export const initializePaystackPayment = async (payload: InitializePaystackPaylo
     };
   }
 
-  const { data } = await paystackClient.post("/transaction/initialize", {
-      email: payload.email,
-      amount: payload.amount * 100,
-      reference: payload.reference,
-      callback_url: payload.callbackUrl ?? env.PAYSTACK_CALLBACK_URL,
-      metadata: payload.metadata,
-    subaccount: payload.subaccountCode,
+  // Try with subaccount first, fallback to no subaccount if invalid
+  let requestPayload: any = {
+    email: payload.email,
+    amount: payload.amount * 100,
+    reference: payload.reference,
+    callback_url: payload.callbackUrl ?? env.PAYSTACK_CALLBACK_URL,
+    metadata: payload.metadata,
     transaction_charge: payload.transactionCharge ? payload.transactionCharge * 100 : undefined,
     bearer: payload.bearer ?? "account"
-  });
-
-  return {
-    authorizationUrl: data.data.authorization_url as string,
-    accessCode: data.data.access_code as string,
-    reference: data.data.reference as string,
-    mode: "live" as const
   };
+
+  if (payload.subaccountCode) {
+    requestPayload.subaccount = payload.subaccountCode;
+  }
+
+  try {
+    const { data } = await paystackClient.post("/transaction/initialize", requestPayload);
+
+    console.log("[paystack] initializePaystackPayment response", {
+      reference: data.data.reference,
+      authorizationUrl: data.data.authorization_url,
+      accessCode: data.data.access_code,
+      usedSubaccount: Boolean(payload.subaccountCode)
+    });
+
+    return {
+      authorizationUrl: data.data.authorization_url as string,
+      accessCode: data.data.access_code as string,
+      reference: data.data.reference as string,
+      mode: "live" as const
+    };
+  } catch (error) {
+    // If subaccount is invalid and we were trying to use one, retry without subaccount
+    if (payload.subaccountCode && axios.isAxiosError(error) && error.response?.status === 404) {
+      console.warn("[paystack] initializePaystackPayment subaccount invalid, retrying without subaccount", {
+        subaccountCode: payload.subaccountCode,
+        error: error.response?.data
+      });
+
+      const retryPayload = { ...requestPayload };
+      delete retryPayload.subaccount;
+      delete retryPayload.transaction_charge;
+      delete retryPayload.bearer;
+
+      const { data } = await paystackClient.post("/transaction/initialize", retryPayload).catch((retryError) => {
+        throw new AppError(
+          getPaystackErrorMessage(retryError, "Paystack could not start this payment. Please try again."),
+          502
+        );
+      });
+
+      console.log("[paystack] initializePaystackPayment retry response (no subaccount)", {
+        reference: data.data.reference,
+        authorizationUrl: data.data.authorization_url,
+        accessCode: data.data.access_code
+      });
+
+      return {
+        authorizationUrl: data.data.authorization_url as string,
+        accessCode: data.data.access_code as string,
+        reference: data.data.reference as string,
+        mode: "live" as const
+      };
+    }
+
+    throw new AppError(getPaystackErrorMessage(error, "Paystack could not start this payment. Please try again."), 502);
+  }
 };
 
 export const verifyPaystackPayment = async (reference: string) => {

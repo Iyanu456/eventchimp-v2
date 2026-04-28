@@ -58,7 +58,7 @@ export function Navbar() {
             </span>
             {currentUser ? (
               <>
-                <button
+                {/*<button
                   type="button"
                   className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-[#5e5968] transition hover:bg-[#f5effd] hover:text-ink"
                   onClick={() => {
@@ -68,10 +68,10 @@ export function Navbar() {
                 >
                   <LogOut className="h-4 w-4 text-accent" />
                   Log out
-                </button>
+                </button>*/}
                 <Link href={currentUser.role === "admin" ? "/admin" : "/dashboard"}>
                   <Button variant="pill" size="sm">
-                    Open workspace
+                    Open Dashboard
                   </Button>
                 </Link>
               </>

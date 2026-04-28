@@ -26,9 +26,10 @@ function AuthField({
   );
 }
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams?: { next?: string } }) {
   const router = useRouter();
   const { login, googleInitiate } = useAppMutations();
+  const nextPath = searchParams?.next;
   const [email, setEmail] = useState("organizer@eventchimp.com");
   const [password, setPassword] = useState("Password123!");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +48,7 @@ export default function LoginPage() {
       footer={
         <p className="text-sm text-[#251d30]">
           Need an account?{" "}
-          <Link href="/signup" className="font-semibold text-[#4b2a76]">
+          <Link href={nextPath ? `/signup?next=${encodeURIComponent(nextPath)}` : "/signup"} className="font-semibold text-[#4b2a76]">
             Create account
           </Link>
         </p>
@@ -64,7 +65,7 @@ export default function LoginPage() {
         onSubmit={async (event) => {
           event.preventDefault();
           const response = await login.mutateAsync({ email, password });
-          router.push(response.data.user.role === "admin" ? "/admin" : "/dashboard");
+          router.push(nextPath || (response.data.user.role === "admin" ? "/admin" : "/dashboard"));
         }}
       >
         <AuthField icon={<Mail className="h-4 w-4" />}>

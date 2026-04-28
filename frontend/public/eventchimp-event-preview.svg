@@ -1,0 +1,49 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" rx="36" fill="#FFF7F3"/>
+  <rect x="48" y="48" width="1104" height="534" rx="32" fill="url(#bg)"/>
+  <path d="M748.152 114C895.993 114 1015.85 233.857 1015.85 381.698V516H480.455L519.158 457.842C588.735 353.263 706.14 290.434 831.751 290.434H896.826C831.94 230.653 747.722 196.302 655.416 196.302H372.242L428.727 150.965C505.39 89.4298 600.742 56 698.11 56H748.152V114Z" fill="url(#wave)" fill-opacity="0.92"/>
+  <path d="M1106 394.837C1058.49 308.353 963.453 249.884 854.756 249.884H757.792C686.391 249.884 617.825 278.389 567.602 329.117L383.132 515.5H1106V394.837Z" fill="url(#waveSoft)" fill-opacity="0.78"/>
+  <circle cx="156" cy="148" r="32" fill="#FF5A1F" fill-opacity="0.18"/>
+  <circle cx="1038" cy="126" r="18" fill="#FFFFFF" fill-opacity="0.28"/>
+  <rect x="118" y="170" width="286" height="314" rx="28" fill="#FFFFFF" fill-opacity="0.96"/>
+  <rect x="154" y="214" width="214" height="144" rx="22" fill="#FFF1EB"/>
+  <rect x="178" y="240" width="166" height="16" rx="8" fill="#FF5A1F" fill-opacity="0.24"/>
+  <rect x="178" y="274" width="122" height="12" rx="6" fill="#261B38" fill-opacity="0.18"/>
+  <rect x="178" y="302" width="150" height="12" rx="6" fill="#261B38" fill-opacity="0.12"/>
+  <rect x="178" y="376" width="156" height="18" rx="9" fill="#FF5A1F"/>
+  <rect x="178" y="414" width="118" height="12" rx="6" fill="#261B38" fill-opacity="0.12"/>
+  <g filter="url(#shadow)">
+    <rect x="476" y="178" width="494" height="286" rx="30" fill="#FFFFFF" fill-opacity="0.98"/>
+  </g>
+  <rect x="518" y="220" width="104" height="28" rx="14" fill="#FFF1EB"/>
+  <text x="549" y="239" fill="#FF5A1F" font-family="Arial, sans-serif" font-size="14" font-weight="700">Event Page</text>
+  <text x="518" y="295" fill="#171717" font-family="Arial, sans-serif" font-size="52" font-weight="700">EventChimp</text>
+  <text x="518" y="352" fill="#171717" font-family="Arial, sans-serif" font-size="52" font-weight="700">Preview</text>
+  <text x="518" y="398" fill="#6B6577" font-family="Arial, sans-serif" font-size="24" font-weight="500">Smart event pages, premium checkout, fast check-in.</text>
+  <rect x="518" y="426" width="188" height="48" rx="24" fill="#FF5A1F"/>
+  <text x="564" y="456" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="18" font-weight="700">Open Event</text>
+  <text x="118" y="560" fill="#FFFFFF" fill-opacity="0.88" font-family="Arial, sans-serif" font-size="24" font-weight="600">eventchimp.com</text>
+  <defs>
+    <linearGradient id="bg" x1="48" y1="48" x2="1152" y2="582" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#281B3D"/>
+      <stop offset="1" stop-color="#59356E"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="1015.85" y1="56" x2="543.338" y2="457.461" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D09AFE"/>
+      <stop offset="1" stop-color="#8D5BE9"/>
+    </linearGradient>
+    <linearGradient id="waveSoft" x1="1106" y1="249.884" x2="551.198" y2="634.193" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4C0A8"/>
+      <stop offset="1" stop-color="#FF7A45"/>
+    </linearGradient>
+    <filter id="shadow" x="448" y="156" width="550" height="342" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="6"/>
+      <feGaussianBlur stdDeviation="14"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.0941176 0 0 0 0 0.0588235 0 0 0 0 0.14902 0 0 0 0.14 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_2"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_2" result="shape"/>
+    </filter>
+  </defs>
+</svg>

@@ -9,8 +9,24 @@ export const checkoutQuoteController = async (req: Request, res: Response) => {
 };
 
 export const initializeCheckoutController = async (req: Request, res: Response) => {
-  const payload = await initializeCheckout(req.body, req.user);
-  res.status(201).json(apiResponse(payload, "Checkout initialized successfully"));
+  console.log("[payments/checkout] initializeCheckoutController request body:", {
+    body: req.body,
+    userId: req.user?.id ?? null
+  });
+
+  try {
+    const payload = await initializeCheckout(req.body, req.user);
+    console.log("[payments/checkout] initializeCheckoutController success:", {
+      reference: payload.reference,
+      mode: payload.mode,
+      buyerTotal: payload.pricing?.buyerTotal
+    });
+    res.status(201).json(apiResponse(payload, "Checkout initialized successfully"));
+  } catch (error) {
+    console.error("[payments/checkout] initializeCheckoutController error:", error instanceof Error ? error.message : error);
+    console.error(error);
+    throw error;
+  }
 };
 
 export const verifyCheckoutController = async (req: Request, res: Response) => {

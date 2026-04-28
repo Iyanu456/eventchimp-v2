@@ -53,6 +53,9 @@ export const BRANDING_ASSET_TYPES = [
   "badge_pass",
   "sponsor_backdrop"
 ] as const;
+export const TICKET_STATUSES = ["issued", "checked_in", "refunded", "voided"] as const;
+export const EVENT_COLLABORATOR_ROLES = ["owner", "manager", "scanner", "viewer"] as const;
+export const INVITATION_STATUSES = ["pending", "accepted", "revoked", "expired"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 export type AuthProvider = (typeof AUTH_PROVIDERS)[number];
@@ -68,3 +71,6 @@ export type LedgerEntryType = (typeof LEDGER_ENTRY_TYPES)[number];
 export type WebhookProcessingStatus = (typeof WEBHOOK_PROCESSING_STATUSES)[number];
 export type RefundStatus = (typeof REFUND_STATUSES)[number];
 export type BrandingAssetType = (typeof BRANDING_ASSET_TYPES)[number];
+export type TicketStatus = (typeof TICKET_STATUSES)[number];
+export type EventCollaboratorRole = (typeof EVENT_COLLABORATOR_ROLES)[number];
+export type InvitationStatus = (typeof INVITATION_STATUSES)[number];

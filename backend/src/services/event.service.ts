@@ -5,6 +5,7 @@ import { OrganizerProfileModel } from "../models/OrganizerProfile";
 import { AppError } from "../utils/app-error";
 import { slugify } from "../utils/slug";
 import { uploadImageBuffer } from "./cloudinary.service";
+import { getEventAccessContext } from "./event-access.service";
 
 type TicketTierInput = {
   id: string;
@@ -253,6 +254,24 @@ const ensureUniqueSlug = async (title: string, currentId?: string) => {
   }
 };
 
+const ensureRealisticEventDates = (startDate: Date, endDate: Date, options: { requireFutureStart: boolean }) => {
+  if (Number.isNaN(startDate.getTime())) {
+    throw new AppError("Choose a valid event start date and time", 400);
+  }
+
+  if (Number.isNaN(endDate.getTime())) {
+    throw new AppError("Choose a valid event end date and time", 400);
+  }
+
+  if (options.requireFutureStart && startDate.getTime() < Date.now() - 60 * 1000) {
+    throw new AppError("Event start time cannot be in the past", 400);
+  }
+
+  if (endDate <= startDate) {
+    throw new AppError("Event end time must be after the start time", 400);
+  }
+};
+
 export const getEvents = async (query: Record<string, string | undefined>) => {
   const filter: Record<string, unknown> = {};
 
@@ -333,9 +352,13 @@ export const createEvent = async (organizerId: string, input: EventInput, file?:
   const ticketTiers = normalizeTicketTiers(input.ticketTiers, input.ticketPrice, input.isFree, input.capacity);
   const ticketSummary = summarizeTicketTiers(ticketTiers);
   const organizerProfile = await OrganizerProfileModel.findOne({ userId: organizerId });
+  const payoutReady = Boolean(organizerProfile?.payoutReady) && organizerProfile?.payoutStatus === "verified";
+  const startDate = new Date(input.startDate);
+  const endDate = new Date(input.endDate);
+  ensureRealisticEventDates(startDate, endDate, { requireFutureStart: true });
 
-  if (!ticketSummary.isFree && !organizerProfile?.payoutReady) {
-    throw new AppError("Complete payout setup before creating a paid event", 400);
+  if (!payoutReady) {
+    throw new AppError("Complete and verify your payout profile before creating events", 403);
   }
 
   const event = await EventModel.create({
@@ -346,12 +369,12 @@ export const createEvent = async (organizerId: string, input: EventInput, file?:
     description: sanitizeDescription(input.description),
     coverImage,
     location: input.location,
-    startDate: new Date(input.startDate),
-    endDate: new Date(input.endDate),
+    startDate,
+    endDate,
     capacity: input.capacity,
     ticketPrice: ticketSummary.ticketPrice,
     isFree: ticketSummary.isFree,
-    status: input.status,
+    status: "published",
     tags: normalizeTags(input.tags),
     scheduleType: input.scheduleType ?? "single",
     recurrence: normalizeRecurrence(input.scheduleType ?? "single", input.recurrence),
@@ -360,7 +383,7 @@ export const createEvent = async (organizerId: string, input: EventInput, file?:
     ticketTiers,
     guests: normalizeGuests(input.guests),
     customFields: normalizeCustomFields(input.customFields),
-    payoutReady: ticketSummary.isFree ? false : Boolean(organizerProfile?.payoutReady),
+    payoutReady,
     accessStatus: "active",
     riskStatus: organizerProfile?.riskStatus ?? "clear",
     suspensionReason: ""
@@ -380,7 +403,8 @@ export const updateEvent = async (
     throw new AppError("Event not found", 404);
   }
 
-  if (actor.role !== "admin" && event.organizerId.toString() !== actor.id) {
+  const accessContext = await getEventAccessContext(eventId, actor);
+  if (accessContext.role !== "admin" && accessContext.role !== "owner" && accessContext.role !== "manager") {
     throw new AppError("You cannot update this event", 403);
   }
 
@@ -395,7 +419,6 @@ export const updateEvent = async (
   if (input.startDate) event.startDate = new Date(input.startDate);
   if (input.endDate) event.endDate = new Date(input.endDate);
   if (typeof input.capacity === "number") event.capacity = input.capacity;
-  if (input.status) event.status = input.status;
   if (input.tags !== undefined) event.tags = normalizeTags(input.tags);
   if (input.scheduleType) {
     event.scheduleType = input.scheduleType;
@@ -425,34 +448,47 @@ export const updateEvent = async (
     );
     const ticketSummary = summarizeTicketTiers(ticketTiers);
     const organizerProfile = await OrganizerProfileModel.findOne({ userId: event.organizerId });
-    if (!ticketSummary.isFree && !organizerProfile?.payoutReady) {
-      throw new AppError("Complete payout setup before switching this event to paid tickets", 400);
-    }
+    const payoutReady = Boolean(organizerProfile?.payoutReady) && organizerProfile?.payoutStatus === "verified";
     event.ticketTiers = ticketTiers as never;
     event.ticketPrice = ticketSummary.ticketPrice;
     event.isFree = ticketSummary.isFree;
-    event.payoutReady = ticketSummary.isFree ? false : Boolean(organizerProfile?.payoutReady);
+    event.payoutReady = payoutReady;
+  }
+
+  if (input.status) {
+    if (input.status === "draft" && actor.role !== "admin") {
+      event.status = event.status === "draft" ? "draft" : "published";
+    } else {
+      event.status = input.status;
+    }
+  }
+
+  if (event.status === "published") {
+    const organizerProfile = await OrganizerProfileModel.findOne({ userId: event.organizerId });
+    const payoutReady = Boolean(organizerProfile?.payoutReady) && organizerProfile?.payoutStatus === "verified";
+    if (!payoutReady) {
+      throw new AppError("A verified payout profile is required before publishing events", 403);
+    }
+    event.payoutReady = true;
   }
 
   if (file) {
     event.coverImage = await uploadImageBuffer(file, "eventchimp/events");
   }
 
+  ensureRealisticEventDates(event.startDate, event.endDate, { requireFutureStart: false });
+
   await event.save();
   return event;
 };
 
 export const deleteEvent = async (eventId: string, actor: Express.User) => {
-  const event = await EventModel.findById(eventId);
-  if (!event) {
-    throw new AppError("Event not found", 404);
-  }
-
-  if (actor.role !== "admin" && event.organizerId.toString() !== actor.id) {
+  const accessContext = await getEventAccessContext(eventId, actor);
+  if (accessContext.role !== "admin" && accessContext.role !== "owner") {
     throw new AppError("You cannot delete this event", 403);
   }
 
-  await event.deleteOne();
+  await (accessContext.event as { deleteOne: () => Promise<unknown> }).deleteOne();
 };
 
 export const getEventMessages = async (eventId: string) =>

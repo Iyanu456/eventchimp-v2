@@ -140,6 +140,55 @@ pnpm dev
 - backend health: `http://localhost:4000/api/health`
 - swagger docs: `http://localhost:4000/api/docs`
 
+## Backend Docker
+
+The backend can run as a portable Docker image with MongoDB and Redis.
+
+1. Prepare Docker env values:
+
+```bash
+cp backend/.env.docker.example backend/.env.docker
+```
+
+Update at least these values in `backend/.env.docker`:
+
+- `JWT_SECRET`
+- `CLIENT_URL`
+- optional Paystack keys
+- optional Resend keys
+- optional Cloudinary keys
+- optional Google OAuth keys
+
+2. Start the backend stack:
+
+```bash
+docker compose -f docker-compose.backend.yml up --build
+```
+
+3. Open:
+
+- backend API: `http://localhost:4000`
+- health check: `http://localhost:4000/api/health`
+- swagger docs: `http://localhost:4000/api/docs`
+
+4. Stop the stack:
+
+```bash
+docker compose -f docker-compose.backend.yml down
+```
+
+To keep MongoDB data between runs, the compose stack uses named volumes.
+
+### Build the backend image only
+
+If you want to deploy the API separately on a platform that accepts a Docker image:
+
+```bash
+docker build -f backend/Dockerfile -t eventchimp-backend ./backend
+```
+
+Then provide the same environment variables from `backend/.env.docker.example` in your host platform.
+
 ## Seeded Demo Accounts
 
 When `SEED_ON_BOOT=true`, the backend seeds sample users and events if the events collection is empty.

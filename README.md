@@ -176,8 +176,12 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
 
 Required:
 
-- `MONGODB_URI`
 - `JWT_SECRET`
+
+Database:
+
+- `MONGODB_TEST_URI` for `NODE_ENV=development` or `NODE_ENV=test`
+- `MONGODB_LIVE_URI` for `NODE_ENV=production`
 
 Commonly important:
 
@@ -187,13 +191,16 @@ Commonly important:
 - `REDIS_URL`
 - `JWT_EXPIRES_IN`
 - `SEED_ON_BOOT`
+- `PAYSTACK_CALLBACK_URL`
 
 Payments and email:
 
-- `PAYSTACK_SECRET_KEY`
-- `PAYSTACK_WEBHOOK_SECRET`
-- `PAYSTACK_PUBLIC_KEY`
-- `PAYSTACK_CALLBACK_URL`
+- `PAYSTACK_TEST_SECRET_KEY`
+- `PAYSTACK_TEST_PUBLIC_KEY`
+- `PAYSTACK_TEST_WEBHOOK_SECRET`
+- `PAYSTACK_LIVE_SECRET_KEY`
+- `PAYSTACK_LIVE_PUBLIC_KEY`
+- `PAYSTACK_LIVE_WEBHOOK_SECRET`
 - `RESEND_API_KEY`
 - `EMAIL_FROM` or `RESEND_FROM_EMAIL`
 
@@ -205,6 +212,12 @@ Media and auth:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
+
+Compatibility note:
+
+- `MONGODB_URI` still works as a shared fallback if you want the same database in every environment
+- `PAYSTACK_SECRET_KEY`, `PAYSTACK_PUBLIC_KEY`, and `PAYSTACK_WEBHOOK_SECRET` still work as shared fallbacks
+- the backend now automatically uses test MongoDB and Paystack credentials outside production, and live credentials in production
 
 ### 4. Run the app
 

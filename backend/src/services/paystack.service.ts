@@ -52,7 +52,7 @@ type PaystackRefundPayload = {
   merchantNote?: string;
 };
 
-const isLiveMode = () => Boolean(env.PAYSTACK_SECRET_KEY);
+const isLiveMode = () => env.PAYSTACK_MODE === "live" && Boolean(env.PAYSTACK_SECRET_KEY);
 
 const getPaystackErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError<{ message?: string }>(error)) {

@@ -2,25 +2,25 @@
 
 EventChimp is a full-stack event platform for publishing events, selling tickets, managing organizers, handling payouts, and running event operations from a modern dashboard.
 
-The app is split into two main parts:
+The application is split into two main packages:
 
 - `frontend/`: Next.js App Router, React, TypeScript, Tailwind CSS, TanStack Query, Zustand
 - `backend/`: Express, TypeScript, MongoDB, BullMQ, Redis, Paystack, Resend, Swagger
 
-The frontend does not use Next.js API routes as the main backend. Product logic lives in the Express API and is consumed through a shared frontend API service layer.
+The frontend is API-first. Business logic lives in the Express backend and is consumed from a shared frontend service layer.
 
 ## What The App Covers
 
 EventChimp currently includes:
 
-- public landing page and event discovery
-- event detail pages with checkout
-- free and paid ticket acquisition flows
+- public landing and event discovery
+- event detail pages and checkout
+- free and paid ticket acquisition
 - organizer dashboard and event management
-- payout profile setup for organizers
+- payout profile setup
+- ticket generation and QR foundations
 - admin overview pages
-- QR-based ticket generation and scanning foundations
-- Paystack-backed payment verification
+- Paystack-based payment verification
 - BullMQ-backed async jobs
 - Swagger API docs
 
@@ -45,23 +45,25 @@ eventchimp-v2/
 │  ├─ src/routes/
 │  ├─ src/services/
 │  ├─ src/utils/
-│  └─ src/validators/
-├─ docker-compose.backend.yml
+│  ├─ src/validators/
+│  ├─ Dockerfile
+│  ├─ docker-compose.yml
+│  └─ .env.docker.example
 ├─ package.json
 └─ pnpm-workspace.yaml
 ```
 
-## Core Tech Choices
+## Tech Stack
 
 ### Frontend
 
-- Next.js 14 App Router
+- Next.js 14
 - React 18
 - TypeScript
 - Tailwind CSS
+- Axios
 - TanStack Query
 - Zustand
-- Axios
 
 ### Backend
 
@@ -71,14 +73,14 @@ eventchimp-v2/
 - Redis + BullMQ
 - JWT auth
 - Google OAuth
-- Paystack payments
-- Resend email delivery
-- Cloudinary media support
-- Swagger docs
+- Paystack
+- Resend
+- Cloudinary
+- Swagger
 
-## Important Application URLs
+## Key Routes
 
-### Frontend routes
+### Frontend
 
 - `/`
 - `/events`
@@ -105,7 +107,7 @@ eventchimp-v2/
 - `/invitations/[token]`
 - `/verify-ticket/[token]`
 
-### Backend route groups
+### Backend
 
 - `/api/auth`
 - `/api/events`
@@ -122,19 +124,19 @@ eventchimp-v2/
 
 ## Prerequisites
 
-Install these before running the app:
+Install these locally before running the app outside Docker:
 
-- Node.js 20 or newer
-- `pnpm` 10 or newer
+- Node.js 20+
+- `pnpm` 10+
 - MongoDB
 - Redis
 
-Optional but needed for full production behavior:
+Optional integrations for full feature coverage:
 
-- Paystack account
-- Resend account
-- Cloudinary account
-- Google OAuth credentials
+- Paystack
+- Resend
+- Cloudinary
+- Google OAuth
 
 ## Local Setup
 
@@ -158,9 +160,9 @@ Backend:
 cp backend/.env.example backend/.env
 ```
 
-### 3. Update environment variables
+### 3. Configure environment variables
 
-#### Frontend env
+#### Frontend
 
 `frontend/.env.local`
 
@@ -168,7 +170,7 @@ cp backend/.env.example backend/.env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api
 ```
 
-#### Backend env
+#### Backend
 
 `backend/.env`
 
@@ -186,7 +188,7 @@ Commonly important:
 - `JWT_EXPIRES_IN`
 - `SEED_ON_BOOT`
 
-Payment and email:
+Payments and email:
 
 - `PAYSTACK_SECRET_KEY`
 - `PAYSTACK_WEBHOOK_SECRET`
@@ -204,15 +206,15 @@ Media and auth:
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
 
-### 4. Start the app
+### 4. Run the app
 
-Run frontend and backend together:
+Run the whole workspace:
 
 ```bash
 pnpm dev
 ```
 
-This uses the workspace root script and starts:
+This starts:
 
 - frontend on `http://localhost:3000`
 - backend on `http://localhost:4000`
@@ -253,11 +255,13 @@ When `SEED_ON_BOOT=true`, the backend seeds sample users and events if the datab
 
 For production, set `SEED_ON_BOOT=false`.
 
-## Frontend Architecture Notes
+## Architecture Notes
 
-The frontend uses a service-layer structure instead of putting API requests directly in pages and components.
+### Frontend
 
-Key folders:
+The frontend uses a service-layer structure instead of putting API requests directly in UI files.
+
+Important folders:
 
 - `frontend/src/apiServices/base-urls.ts`
 - `frontend/src/apiServices/routes.ts`
@@ -268,47 +272,48 @@ Key folders:
 
 Conventions:
 
-- server state goes through TanStack Query
-- lightweight auth/session state goes through Zustand
-- UI components consume hooks and typed request helpers
-- payment totals are computed on the backend, not trusted from the client
+- server state flows through TanStack Query
+- auth/session state stays lightweight in Zustand
+- components consume typed request helpers and hooks
+- payment totals are backend-computed
 
-## Backend Architecture Notes
+### Backend
 
-The backend follows a layered structure:
+The backend uses a layered structure:
 
-- `routes`: route registration
-- `controllers`: request/response handlers
-- `services`: core business logic
-- `models`: Mongoose schemas
-- `validators`: Zod validation
-- `middleware`: auth, error handling, etc.
-- `config`: environment, DB, Swagger, CORS
-- `utils`: shared helpers
+- `routes`
+- `controllers`
+- `services`
+- `models`
+- `validators`
+- `middleware`
+- `config`
+- `utils`
 
-Operational behavior:
+Operationally:
 
 - MongoDB stores product data
 - Redis powers BullMQ queues
 - webhook processing and ticket issuance are async-safe
-- paid checkout verification is server-side
-- ticket issuance and financial records are handled by backend services
+- payment verification is server-side
+- ticketing and finance logic live in backend services
 
 ## Backend Docker
 
-The backend is dockerized for portable deployment.
+The backend Docker setup now lives entirely inside `backend/`, so you can run it from that directory directly.
 
 ### Files
 
 - [Dockerfile](C:/Users/IYANUOLUWA/Documents/React/eventchimp-v2/backend/Dockerfile)
-- [docker-compose.backend.yml](C:/Users/IYANUOLUWA/Documents/React/eventchimp-v2/docker-compose.backend.yml)
+- [docker-compose.yml](C:/Users/IYANUOLUWA/Documents/React/eventchimp-v2/backend/docker-compose.yml)
 - [backend/.env.docker.example](C:/Users/IYANUOLUWA/Documents/React/eventchimp-v2/backend/.env.docker.example)
 - [backend/.env.docker](C:/Users/IYANUOLUWA/Documents/React/eventchimp-v2/backend/.env.docker)
 
 ### Run the backend stack with Docker
 
 ```bash
-docker compose -f docker-compose.backend.yml up --build
+cd backend
+docker compose up --build
 ```
 
 This starts:
@@ -320,20 +325,29 @@ This starts:
 Stop it with:
 
 ```bash
-docker compose -f docker-compose.backend.yml down
+cd backend
+docker compose down
 ```
 
-### Build backend image only
+Remove volumes too:
 
 ```bash
-docker build -f backend/Dockerfile -t eventchimp-backend ./backend
+cd backend
+docker compose down -v
+```
+
+### Build the backend image only
+
+```bash
+cd backend
+docker build -t eventchimp-backend .
 ```
 
 ## Deployment Notes
 
 ### Backend deployment
 
-To deploy the backend anywhere, provide these environment variables at minimum:
+To deploy the backend anywhere, provide at minimum:
 
 - `NODE_ENV=production`
 - `PORT`
@@ -342,7 +356,7 @@ To deploy the backend anywhere, provide these environment variables at minimum:
 - `CLIENT_URL`
 - `JWT_SECRET`
 
-Then add the optional integrations you intend to use:
+Then add any integrations you use:
 
 - Paystack
 - Resend
@@ -353,29 +367,28 @@ For production:
 
 - set `SEED_ON_BOOT=false`
 - use a strong `JWT_SECRET`
-- use a managed MongoDB instance
-- use a managed Redis instance
-- make sure `CLIENT_URL` points to your real frontend domain
-- make sure `PAYSTACK_CALLBACK_URL` points to the real checkout success path
+- use managed MongoDB and Redis
+- point `CLIENT_URL` at the real frontend
+- point `PAYSTACK_CALLBACK_URL` at the real success URL
 
 ### Frontend deployment
 
-For frontend deployment, set:
+Set:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://your-backend-domain/api
 ```
 
-## Verification Commands
+## Verification
 
-Use these before shipping changes:
+Use these before shipping:
 
 ```bash
 pnpm typecheck
 pnpm build
 ```
 
-You can also run the backend checks directly:
+Backend-only checks:
 
 ```bash
 pnpm --filter eventchimp-backend typecheck
@@ -397,48 +410,64 @@ Check:
 Check:
 
 - `JWT_SECRET`
-- frontend and backend URLs
+- frontend/backend URLs
 - browser local storage for stale tokens
 
-### Queue jobs not processing
+### Queue jobs are not processing
 
 Check:
 
 - `REDIS_URL`
 - Redis is reachable
-- backend process started queue workers successfully
+- backend workers started successfully
 
-### Payments not verifying
+### Payments are not verifying
 
 Check:
 
 - `PAYSTACK_SECRET_KEY`
 - `PAYSTACK_CALLBACK_URL`
 - `CLIENT_URL`
-- webhook delivery configuration
+- webhook delivery setup
 
-### Emails not sending
+### Emails are not sending
 
 Check:
 
 - `RESEND_API_KEY`
 - `EMAIL_FROM` or `RESEND_FROM_EMAIL`
 
-### Google auth not working
+### Google auth is not working
 
 Check:
 
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
-- authorized redirect URIs in Google Cloud Console
+- redirect URIs configured in Google Cloud Console
+
+### Docker cannot start
+
+Check:
+
+- Docker Desktop is running
+- the Docker daemon is healthy
+- `backend/.env.docker` exists
+
+Then run:
+
+```bash
+cd backend
+docker compose config
+docker compose up --build
+```
 
 ## Security Notes
 
 - Never commit real `.env` files with live secrets.
 - Keep `JWT_SECRET`, Paystack keys, Resend keys, and OAuth secrets private.
-- Use production database and Redis credentials only through env vars.
-- Replace placeholder credentials before any public deployment.
+- Use environment variables for all production credentials.
+- Replace placeholder values before deploying publicly.
 
 ## Current Status
 
@@ -447,12 +476,12 @@ The codebase is already structured for:
 - local development
 - backend Docker deployment
 - API-first frontend integration
-- progressive feature expansion across organizer, admin, payment, and ticketing flows
+- progressive expansion across organizer, admin, payment, and ticketing flows
 
-The main things you typically configure per environment are:
+The main things you usually configure per environment are:
 
 - URLs
 - database
 - Redis
 - auth secrets
-- payment/email/media providers
+- payment, email, media, and OAuth providers

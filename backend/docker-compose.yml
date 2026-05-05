@@ -1,12 +1,12 @@
 services:
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     container_name: eventchimp-backend
     restart: unless-stopped
     env_file:
-      - ./backend/.env.docker
+      - ./.env.docker
     ports:
       - "4000:4000"
     depends_on:
